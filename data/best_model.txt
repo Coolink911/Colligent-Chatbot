@@ -1,0 +1,87 @@
+Collins Maripane - Diffusion Model Research Implementation
+
+This document contains the complete implementation of a diffusion model for image generation, specifically designed for astronomical data analysis. This represents significant research work in machine learning and computer vision.
+
+MODEL ARCHITECTURE OVERVIEW:
+The implementation includes a ContextU-Net architecture with residual connections, designed for conditional image generation using diffusion processes. The model is specifically tailored for processing 64x64 pixel astronomical images.
+
+KEY COMPONENTS:
+
+1. RESIDUAL CONVOLUTIONAL BLOCKS:
+- Implements residual connections for better gradient flow
+- Uses batch normalization and ReLU activation
+- Supports both residual and non-residual modes
+- Includes methods for dynamic channel adjustment
+
+2. U-NET ARCHITECTURE:
+- Downsampling path with 4 levels (UnetDown blocks)
+- Upsampling path with skip connections (UnetUp blocks)
+- Context embedding for conditional generation
+- Time embedding for diffusion timesteps
+
+3. CONTEXT EMBEDDING:
+- EmbedFC class for embedding context labels
+- Supports 6-dimensional context features (n_cfeat=6)
+- Time embedding for diffusion process timesteps
+
+4. CUSTOM DATASET:
+- Handles NumPy arrays for image and label data
+- Supports 64x64 pixel images
+- Includes data transformation pipeline
+
+HYPERPARAMETERS:
+- Timesteps: 1500 (diffusion steps)
+- Beta schedule: 1e-4 to 0.02
+- Network features: 64 hidden dimensions
+- Context features: 6 dimensions
+- Image height: 64 pixels
+- Batch size: 128
+- Training epochs: 200
+- Learning rate: 1e-3 with linear decay
+
+TRAINING PROCESS:
+The model implements a complete training loop with:
+- Noise perturbation using the diffusion schedule
+- MSE loss between predicted and true noise
+- Learning rate decay over epochs
+- Periodic model saving (every 25 epochs)
+- Training loss visualization
+
+EVALUATION METRICS:
+1. Pixel Intensity Histograms: Compare real vs generated image distributions
+2. Power Spectrum Analysis: Analyze spatial frequency characteristics
+3. PDF Analysis: Probability density function comparison
+4. Visual Comparison: Side-by-side real vs generated images
+
+SAMPLING ALGORITHM:
+- Implements standard DDPM sampling
+- Supports intermediate step visualization
+- Generates 100 samples for evaluation
+- Includes noise injection for stability
+
+MODEL PERSISTENCE:
+- Saves models at epochs 50, 100, 150, and 199
+- Stores in './weights_64/' directory
+- Includes training loss plots and evaluation metrics
+
+RESEARCH CONTRIBUTIONS:
+This implementation demonstrates:
+- Advanced understanding of diffusion models
+- Practical experience with PyTorch deep learning
+- Knowledge of astronomical data processing
+- Expertise in computer vision and image generation
+- Ability to implement complex neural network architectures
+- Experience with training large-scale models
+- Understanding of evaluation metrics for generative models
+
+TECHNICAL SKILLS DEMONSTRATED:
+- PyTorch framework expertise
+- Neural network architecture design
+- Diffusion model implementation
+- Data preprocessing and augmentation
+- Model training and optimization
+- Evaluation and visualization
+- Scientific computing with NumPy and Matplotlib
+- CUDA/GPU acceleration
+
+This work represents significant research experience in generative AI and demonstrates advanced machine learning capabilities, particularly in the domain of astronomical data analysis and image generation.

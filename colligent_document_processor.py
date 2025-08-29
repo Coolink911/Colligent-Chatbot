@@ -1,0 +1,88 @@
+import os
+import PyPDF2
+from typing import List, Dict, Any
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_core.documents import Document
+import logging
+
+from colligent_config import Config
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class DocumentProcessor:
+    """Handles document loading, text extraction, and chunking"""
+    
+    def __init__(self, config: Config):
+        self.config = config
+        self.text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=config.CHUNK_SIZE,
+            chunk_overlap=config.CHUNK_OVERLAP,
+            length_function=len,
+        )
+    
+    def extract_text_from_pdf(self, file_path: str) -> str:
+        """Extract text from a PDF file"""
+        try:
+            with open(file_path, 'rb') as file:
+                pdf_reader = PyPDF2.PdfReader(file)
+                text = ""
+                for page in pdf_reader.pages:
+                    text += page.extract_text() + "\n"
+                return text
+        except Exception as e:
+            logger.error(f"Error extracting text from {file_path}: {str(e)}")
+            return ""
+    
+    def load_documents(self) -> List[Document]:
+        """Load all documents from the data folder"""
+        documents = []
+        data_folder = self.config.DATA_FOLDER
+        
+        if not os.path.exists(data_folder):
+            logger.error(f"Data folder {data_folder} does not exist")
+            return documents
+        
+        for filename in os.listdir(data_folder):
+            file_path = os.path.join(data_folder, filename)
+            
+            if filename.lower().endswith('.pdf'):
+                logger.info(f"Processing PDF: {filename}")
+                text = self.extract_text_from_pdf(file_path)
+                if text.strip():
+                    doc = Document(
+                        page_content=text,
+                        metadata={"source": filename, "type": "pdf"}
+                    )
+                    documents.append(doc)
+            
+            elif filename.lower().endswith('.txt'):
+                logger.info(f"Processing text file: {filename}")
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as file:
+                        text = file.read()
+                        doc = Document(
+                            page_content=text,
+                            metadata={"source": filename, "type": "text"}
+                        )
+                        documents.append(doc)
+                except Exception as e:
+                    logger.error(f"Error reading text file {file_path}: {str(e)}")
+        
+        logger.info(f"Loaded {len(documents)} documents")
+        return documents
+    
+    def split_documents(self, documents: List[Document]) -> List[Document]:
+        """Split documents into chunks"""
+        if not documents:
+            return []
+        
+        chunks = self.text_splitter.split_documents(documents)
+        logger.info(f"Split {len(documents)} documents into {len(chunks)} chunks")
+        return chunks
+    
+    def process_documents(self) -> List[Document]:
+        """Complete document processing pipeline"""
+        documents = self.load_documents()
+        chunks = self.split_documents(documents)
+        return chunks
