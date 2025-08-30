@@ -67,7 +67,180 @@ collins_personal_agent/
 - **Mode Switching**: Change response style on the fly
 - **Knowledge Base Management**: Rebuild and update documents
 
+## 🧠 Technical Implementation
 
+### **Agent Instructions & System Prompts**
+
+#### **Core Agent Instructions**
+```python
+# From colligent_config.py
+SYSTEM_PROMPT = """
+You are Collins, a Data Scientist and Astrophysics Researcher. You have access to Collins' personal documents including CV, research papers, and technical implementations.
+
+Your role is to:
+- Answer questions based on Collins' actual documents and experiences
+- Use "I" and "my" to refer to Collins' experiences, skills, and background
+- Reference the documents as "my CV", "my research", "my work", etc.
+- Be personal and authentic to Collins' voice and style
+- Base all answers on the information in Collins' documents
+- If the context doesn't contain enough information to answer the question, respond with: "I do not have available information yet."
+- Be concise but thorough in your responses
+- Maintain Collins' professional yet approachable tone
+"""
+```
+
+#### **Response Mode Transformations**
+```python
+# From colligent_core.py - Response Mode System
+def _transform_to_code_style_mode(self, response: str) -> str:
+    """Transform response to technical implementation-focused mode"""
+    if "I am" in response:
+        response = response.replace("I am", "From a technical implementation perspective, I am")
+    if "diffusion models" in response.lower():
+        response += " In my implementation, I use a ContextU-Net architecture with residual connections, designed for conditional image generation using diffusion processes."
+    if "machine learning" in response.lower():
+        response += " My approach involves implementing residual convolutional blocks with batch normalization and ReLU activation."
+    return response
+```
+
+### **Sub-Agent Architecture**
+
+#### **Document Processing Agent**
+```python
+# From colligent_document_processor.py
+class DocumentProcessor:
+    """Sub-agent responsible for document ingestion and processing"""
+    
+    def process_documents(self) -> List[Document]:
+        """Main processing pipeline"""
+        # 1. Load documents from data directory
+        # 2. Extract text from PDFs and text files
+        # 3. Clean and preprocess text
+        # 4. Split into chunks with overlap
+        # 5. Add metadata for source tracking
+```
+
+#### **Vector Database Agent**
+```python
+# From colligent_vector_db.py
+class VectorStore:
+    """Sub-agent responsible for semantic search and retrieval"""
+    
+    def search_similar(self, query: str, k: int = 5) -> List[Document]:
+        """Semantic similarity search"""
+        # 1. Convert query to embedding
+        # 2. Search vector database
+        # 3. Return top-k most similar documents
+        # 4. Include similarity scores
+```
+
+#### **Response Generation Agent**
+```python
+# From colligent_core.py
+class ContextAwareChatbot:
+    """Main orchestration agent with multiple sub-agents"""
+    
+    def ask_question(self, query: str, include_context: bool = False) -> Dict[str, Any]:
+        """Main question-answering pipeline"""
+        # 1. Get relevant context from VectorStore agent
+        # 2. Apply response mode transformation
+        # 3. Generate response using LLM or fallback
+        # 4. Return response with sources
+```
+
+### **Prompt Engineering & Decision Trees**
+
+#### **Context Assembly Prompt**
+```python
+def create_prompt(self, query: str, context: str) -> str:
+    """Create a prompt for the LLM with context and query"""
+    prompt_template = f"""
+{self.config.SYSTEM_PROMPT}
+
+Context from documents:
+{context}
+
+User Question: {query}
+
+Please answer the question based on the provided context. If the context doesn't contain enough information to answer the question, respond with: "I do not have available information yet."
+"""
+    return prompt_template
+```
+
+#### **Response Strategy Decision Tree**
+```python
+def choose_response_strategy(self, query: str, context: str, llm_available: bool) -> str:
+    """Decision tree for response generation strategy"""
+    
+    # Decision 1: LLM Availability
+    if llm_available:
+        strategy = "openai_gpt"
+    else:
+        strategy = "pattern_based"
+    
+    # Decision 2: Context Quality
+    if not context or context == "No relevant information found in the documents.":
+        return "I do not have available information yet."
+    
+    # Decision 3: Response Mode Application
+    if self.current_mode != "default":
+        return self.apply_mode_transformation(response, self.current_mode)
+    
+    return response
+```
+
+### **RAG Pipeline Visualization**
+
+#### **Complete RAG Process**
+```python
+def visualize_rag_process(self, query: str) -> Dict[str, Any]:
+    """Shows the complete RAG process for a given query"""
+    
+    # Step 1: Query Processing
+    query_embedding = self.vector_store.embeddings.encode(query)
+    
+    # Step 2: Retrieval
+    similar_chunks = self.vector_store.search_similar(query, k=5)
+    
+    # Step 3: Context Assembly
+    context = self.assemble_context(similar_chunks)
+    
+    # Step 4: Response Generation
+    response = self.generate_response(query, context)
+    
+    return {
+        'query': query,
+        'query_embedding_shape': query_embedding.shape,
+        'retrieved_chunks': len(similar_chunks),
+        'context_length': len(context),
+        'response_length': len(response),
+        'sources': self.extract_sources(similar_chunks)
+    }
+```
+
+### **Error Handling & Fallback Systems**
+
+#### **Graceful Degradation**
+```python
+def get_fallback_response(self, query: str, context: str) -> str:
+    """Fallback system when LLM is unavailable"""
+    
+    # Check if context is insufficient
+    if not self._context_contains_relevant_info(context, query):
+        return "I do not have available information yet."
+    
+    # Pattern-based response generation
+    query_lower = query.lower()
+    
+    if any(word in query_lower for word in ['skill', 'technology', 'programming']):
+        return self._extract_technical_skills(context, query)
+    elif any(word in query_lower for word in ['experience', 'work', 'job']):
+        return self._extract_experience_info(context, query)
+    elif any(word in query_lower for word in ['research', 'study', 'project']):
+        return self._extract_research_info(context, query)
+    else:
+        return self._extract_general_info(context, query)
+```
 
 ## 💡 Sample Questions & Responses
 
