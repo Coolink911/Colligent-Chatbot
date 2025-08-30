@@ -5,10 +5,13 @@ import time
 
 from colligent_config import Config
 from colligent_core import ContextAwareChatbot
+import re
+import time
+from datetime import datetime, timedelta
 
 # Page configuration
 st.set_page_config(
-    page_title="ColliGent",
+    page_title="Collins' Personal AI Assistant",
     page_icon="🤖",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -74,6 +77,64 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# Security functions
+def validate_input(text: str, max_length: int = 1000) -> bool:
+    """Validate user input for security"""
+    if not text or len(text.strip()) == 0:
+        return False
+    
+    if len(text) > max_length:
+        return False
+    
+    # Check for potentially harmful patterns
+    harmful_patterns = [
+        r'<script.*?>.*?</script>',
+        r'<iframe.*?>.*?</iframe>',
+        r'javascript:',
+        r'data:text/html',
+        r'vbscript:',
+        r'onload=',
+        r'onerror=',
+        r'onclick='
+    ]
+    
+    for pattern in harmful_patterns:
+        if re.search(pattern, text, re.IGNORECASE):
+            return False
+    
+    return True
+
+def check_rate_limit(user_id: str = "default") -> bool:
+    """Check if user has exceeded rate limit"""
+    if 'rate_limit' not in st.session_state:
+        st.session_state.rate_limit = {}
+    
+    current_time = time.time()
+    user_requests = st.session_state.rate_limit.get(user_id, [])
+    
+    # Remove requests older than 1 minute
+    user_requests = [req_time for req_time in user_requests if current_time - req_time < 60]
+    
+    # Check if user has exceeded limit (30 requests per minute)
+    if len(user_requests) >= 30:
+        return False
+    
+    # Add current request
+    user_requests.append(current_time)
+    st.session_state.rate_limit[user_id] = user_requests
+    
+    return True
+
+def sanitize_output(text: str) -> str:
+    """Sanitize output to prevent XSS"""
+    # Remove potentially harmful HTML tags
+    text = re.sub(r'<script.*?>.*?</script>', '', text, flags=re.IGNORECASE | re.DOTALL)
+    text = re.sub(r'<iframe.*?>.*?</iframe>', '', text, flags=re.IGNORECASE | re.DOTALL)
+    text = re.sub(r'javascript:', '', text, flags=re.IGNORECASE)
+    text = re.sub(r'data:text/html', '', text, flags=re.IGNORECASE)
+    
+    return text
+
 def initialize_chatbot():
     """Initialize the chatbot"""
     if 'chatbot' not in st.session_state:
@@ -91,10 +152,12 @@ def initialize_chatbot():
 def display_chat_message(message: Dict[str, Any], is_user: bool = False):
     """Display a chat message"""
     if is_user:
+        # Sanitize user input
+        safe_query = sanitize_output(message['query'])
         st.markdown(f"""
         <div class="chat-message user-message">
             <strong>You:</strong><br>
-            {message['query']}
+            {safe_query}
         </div>
         """, unsafe_allow_html=True)
     else:
@@ -459,9 +522,19 @@ def main():
                     # Show description as tooltip
                     st.caption(f"_{mode_info['desc']}_")
         
-        # Process user input
+        # Process user input with security checks
         if (user_input and send_button) or (user_input and st.session_state.get('auto_send', False)):
             if user_input.strip():
+                # Security validation
+                if not validate_input(user_input):
+                    st.error("❌ Invalid input detected. Please check your message and try again.")
+                    st.rerun()
+                
+                # Rate limiting check
+                if not check_rate_limit():
+                    st.error("⚠️ Rate limit exceeded. Please wait a moment before sending another message.")
+                    st.rerun()
+                
                 # Add user message to history
                 user_message = {
                     'query': user_input,
@@ -476,10 +549,13 @@ def main():
                         include_context=show_context
                     )
                     
+                    # Sanitize response
+                    safe_response = sanitize_output(response['response'])
+                    
                     # Add assistant response to history
                     assistant_message = {
                         'query': user_input,
-                        'response': response['response'],
+                        'response': safe_response,
                         'sources': response.get('sources', []),
                         'is_user': False
                     }
@@ -492,7 +568,7 @@ def main():
         st.markdown("---")
         st.markdown("""
         <div style="text-align: center; color: #666; font-size: 0.8rem;">
-            ColliGent | Powered by RAG Technology
+            Collins' Personal AI Assistant | Powered by RAG Technology
         </div>
         """, unsafe_allow_html=True)
 

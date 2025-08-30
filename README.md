@@ -1,6 +1,6 @@
-# 🤖 ColliGent - Personal AI Assistant
+# 🤖 Collins' Personal AI Assistant
 
-A context-aware chatbot powered by **RAG (Retrieval-Augmented Generation)** that answers questions based on personal documents and research. ColliGent provides intelligent responses grounded in specific content through advanced natural language processing and vector search.
+A context-aware chatbot powered by **RAG (Retrieval-Augmented Generation)** that answers questions based on personal documents and research. Collins' Personal AI Assistant provides intelligent responses grounded in specific content through advanced natural language processing and vector search.
 
 ## 🚀 Quick Start
 
@@ -301,8 +301,18 @@ RAG Process:
 
 ### **Environment Variables**
 ```bash
+# Copy env_example.txt to .env and fill in your values
 OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_MODEL=gpt-3.5-turbo
 ```
+
+### **Security Features**
+- **Input Validation**: Prevents XSS and injection attacks
+- **Rate Limiting**: 30 requests per minute per user
+- **Output Sanitization**: Removes potentially harmful content
+- **Session Management**: Secure session handling
+- **CORS Protection**: Disabled for local deployment
+- **XSRF Protection**: Enabled for form security
 
 ### **Customization**
 - Add documents to `data/` folder
@@ -367,7 +377,7 @@ This project is for personal use and educational purposes.
 
 ---
 
-**ColliGent** | Powered by RAG Technology 🤖✨
+**Collins' Personal AI Assistant** | Powered by RAG Technology 🤖✨
 
 ## 📹 Video Walkthrough
 

@@ -24,6 +24,13 @@ class Config:
     MAX_TOKENS = 1500
     TEMPERATURE = 0.7
     
+    # Security Configuration
+    ENABLE_RATE_LIMITING = True
+    MAX_REQUESTS_PER_MINUTE = 30
+    SESSION_TIMEOUT_MINUTES = 60
+    ENABLE_INPUT_VALIDATION = True
+    MAX_INPUT_LENGTH = 1000
+    
     # Embedding Model
     EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
     
