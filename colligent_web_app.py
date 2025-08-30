@@ -135,6 +135,27 @@ def sanitize_output(text: str) -> str:
     
     return text
 
+def check_ip_whitelist() -> bool:
+    """Check if client IP is in whitelist"""
+    config = Config()
+    allowed_ips = config.ALLOWED_IPS
+    
+    # Get client IP (works with proxy)
+    client_ip = st.experimental_get_query_params().get('client_ip', [None])[0]
+    if not client_ip:
+        # Try to get from headers
+        client_ip = "127.0.0.1"  # Default for local development
+    
+    return client_ip in allowed_ips or "localhost" in allowed_ips
+
+def log_suspicious_activity(action: str, details: str = ""):
+    """Log suspicious activity"""
+    config = Config()
+    if config.LOG_SUSPICIOUS_ACTIVITY:
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        log_entry = f"[{timestamp}] SUSPICIOUS: {action} - {details}"
+        print(log_entry)  # In production, use proper logging
+
 def initialize_chatbot():
     """Initialize the chatbot"""
     if 'chatbot' not in st.session_state:
@@ -179,6 +200,25 @@ def display_chat_message(message: Dict[str, Any], is_user: bool = False):
 
 def main():
     """Main application function"""
+    
+    # Security checks
+    config = Config()
+    
+    # IP whitelist check
+    if config.ENABLE_AUTHENTICATION and not check_ip_whitelist():
+        st.error("🚫 Access denied. Your IP is not authorized to access this application.")
+        st.stop()
+    
+    # Session timeout check
+    if 'last_activity' in st.session_state:
+        last_activity = st.session_state.last_activity
+        timeout_minutes = config.SESSION_TIMEOUT_MINUTES
+        if datetime.now() - last_activity > timedelta(minutes=timeout_minutes):
+            st.error("⏰ Session expired. Please refresh the page.")
+            st.stop()
+    
+    # Update last activity
+    st.session_state.last_activity = datetime.now()
     
     # Header
     st.markdown('<h1 class="main-header">🤖 ColliGent</h1>', unsafe_allow_html=True)

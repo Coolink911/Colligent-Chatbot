@@ -26,10 +26,14 @@ class Config:
     
     # Security Configuration
     ENABLE_RATE_LIMITING = True
-    MAX_REQUESTS_PER_MINUTE = 30
-    SESSION_TIMEOUT_MINUTES = 60
+    MAX_REQUESTS_PER_MINUTE = 20  # Reduced for better security
+    SESSION_TIMEOUT_MINUTES = 30   # Shorter timeout
     ENABLE_INPUT_VALIDATION = True
-    MAX_INPUT_LENGTH = 1000
+    MAX_INPUT_LENGTH = 500         # Reduced for security
+    ENABLE_AUTHENTICATION = True
+    ALLOWED_IPS = ["127.0.0.1", "localhost", "192.168.1.149"]  # Restrict access
+    ENABLE_LOGGING = True
+    LOG_SUSPICIOUS_ACTIVITY = True
     
     # Embedding Model
     EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
