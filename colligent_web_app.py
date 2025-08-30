@@ -124,10 +124,123 @@ def main():
     # Initialize chatbot
     initialize_chatbot()
     
+    # Main layout with left panel and chat area
+    col1, col2 = st.columns([1, 3])
+    
     # Initialize global variables
     show_context = st.session_state.get('show_context', False)
     
-    # Initialize messages in session state
+    # Left panel for interactive buttons and settings
+    with col1:
+        # Initialize session state for button states
+        if 'show_system_status' not in st.session_state:
+            st.session_state.show_system_status = False
+        if 'show_settings' not in st.session_state:
+            st.session_state.show_settings = False
+        if 'show_rag_info' not in st.session_state:
+            st.session_state.show_rag_info = False
+        if 'show_help' not in st.session_state:
+            st.session_state.show_help = False
+        
+        # System Status Button
+        if st.button("System Status", type="primary", key="system_status_btn"):
+            st.session_state.show_system_status = not st.session_state.show_system_status
+            st.rerun()
+        
+        if st.session_state.show_system_status:
+            if 'chatbot' in st.session_state:
+                kb_info = st.session_state.chatbot.get_knowledge_base_info()
+                if 'error' not in kb_info:
+                    st.success("✅ Knowledge Base Loaded")
+                    st.info(f"📚 Documents: {kb_info.get('document_count', 0)}")
+                    st.info(f"🔧 Model: {kb_info.get('embedding_model', 'N/A')}")
+                else:
+                    st.error(f"❌ Error: {kb_info['error']}")
+        
+        # Settings Button
+        if st.button("Settings", type="primary", key="settings_btn"):
+            st.session_state.show_settings = not st.session_state.show_settings
+            st.rerun()
+        
+        if st.session_state.show_settings:
+            # API Key input
+            api_key = st.text_input(
+                "OpenAI API Key (optional)",
+                type="password",
+                help="Enter your OpenAI API key for better responses"
+            )
+            
+            if api_key and api_key != st.session_state.get('api_key', ''):
+                st.session_state.api_key = api_key
+                os.environ['OPENAI_API_KEY'] = api_key
+                # Reinitialize chatbot with new API key
+                config = Config()
+                st.session_state.chatbot = ContextAwareChatbot(config)
+                st.success("API key updated!")
+            
+            # Show context option
+            show_context = st.checkbox("Show context in responses", value=st.session_state.get('show_context', False))
+            st.session_state.show_context = show_context
+        
+        # RAG Information Button
+        if st.button("RAG System Info", type="primary", key="rag_info_btn"):
+            st.session_state.show_rag_info = not st.session_state.show_rag_info
+            st.rerun()
+        
+        if st.session_state.show_rag_info:
+            st.markdown("### 🔄 RAG Components")
+            st.markdown("""
+            - ✅ **Retrieval**: Active
+            - ✅ **Generation**: Active  
+            - ✅ **Fallback**: Available
+            """)
+            
+            st.markdown("### 📊 How RAG Works")
+            st.info("""
+            **Retrieval-Augmented Generation (RAG) System:**
+            
+            1. **🔍 Search**: I search through my CV and research documents
+            2. **🧠 Think**: I combine the relevant information from my materials  
+            3. **📚 Sources**: I show you which of my documents I used for each answer
+            
+            This ensures my answers are based on my actual experiences and work, not just general knowledge.
+            """)
+        
+        # Help & Actions Button
+        if st.button("Help & Actions", type="primary", key="help_btn"):
+            st.session_state.show_help = not st.session_state.show_help
+            st.rerun()
+        
+        if st.session_state.show_help:
+            # Clear conversation button
+            if st.button("🗑️ Clear Chat", type="secondary", key="clear_chat_btn"):
+                if 'chatbot' in st.session_state:
+                    st.session_state.chatbot.clear_conversation_history()
+                st.session_state.messages = []
+                st.rerun()
+            
+            # Rebuild knowledge base button
+            if st.button("🔄 Rebuild KB", type="secondary", key="rebuild_kb_btn"):
+                with st.spinner("Rebuilding knowledge base..."):
+                    success = st.session_state.chatbot.initialize_knowledge_base(force_rebuild=True)
+                    if success:
+                        st.success("Knowledge base rebuilt!")
+                    else:
+                        st.error("Failed to rebuild knowledge base.")
+                st.rerun()
+            
+            # Quick tips
+            st.markdown("### 💡 Quick Tips")
+            st.markdown("""
+            - **Ask about my research**: "What is your diffusion model research about?"
+            - **Ask about my skills**: "What programming languages do you know?"
+            - **Ask about my background**: "Tell me about your education and experience"
+            - **Use different modes**: Try Code Style mode for technical details!
+            """)
+    
+    # Main chat area
+    with col2:
+        # Initialize messages in session state
         if 'messages' not in st.session_state:
             st.session_state.messages = []
         
