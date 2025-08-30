@@ -4,7 +4,7 @@ A context-aware chatbot powered by **RAG (Retrieval-Augmented Generation)** that
 
 ## 🚀 Quick Start
 
-### **Option 1: Streamlit Web Interface (Recommended)**
+### **Streamlit Web Interface**
 ```bash
 # Install dependencies
 pip install -r requirements.txt
@@ -14,26 +14,12 @@ streamlit run colligent_web_app.py
 ```
 Access at: `http://localhost:8501`
 
-### **Option 2: Flask API Server**
-```bash
-# Run the API server
-python colligent_api_server.py
-```
-Access at: `http://localhost:5000`
-
-### **Option 3: Easy Startup Script**
-```bash
-# Use the interactive launcher
-python start_colligent.py
-```
-
 ## 📁 Project Structure
 
 ```
 collins_personal_agent/
-├── 📄 Core Files
+├── 📄 Core Application
 │   ├── colligent_web_app.py          # Main Streamlit interface
-│   ├── colligent_api_server.py       # Flask API server
 │   ├── colligent_core.py             # Core chatbot logic
 │   ├── colligent_config.py           # Configuration settings
 │   ├── colligent_vector_db.py        # Vector database operations
@@ -48,14 +34,12 @@ collins_personal_agent/
 │       ├── best_model.py             # Diffusion model code
 │       └── best_model.txt            # Model documentation
 │
-├── 🌐 Web Interface
-│   └── templates/
-│       └── index.html                # Flask frontend
-│
-├── 📋 Documentation
-│   ├── README.md                     # This file
-│   ├── USER_GUIDE.md                 # Customization guide
-│   └── requirements.txt              # Python dependencies
+├── 📋 Configuration
+│   ├── README.md                     # Project documentation
+│   ├── requirements.txt              # Python dependencies
+│   ├── Dockerfile                    # Container deployment
+│   ├── Procfile                      # Heroku deployment
+│   └── runtime.txt                   # Python version
 │
 └── 🗄️ Database
     └── vector_db/                    # ChromaDB vector store
@@ -332,17 +316,16 @@ OPENAI_MODEL=gpt-3.5-turbo
 2. Restart the application
 3. Use "Rebuild KB" button in web interface
 
-## 🎨 Customization Guide
+## 🎨 Customization
 
-See `USER_GUIDE.md` for detailed instructions on:
-- Modifying the web interface design
-- Adding new response modes
-- Customizing the knowledge base
-- Deploying to different environments
+- **Add Documents**: Place files in `data/` directory
+- **Modify Response Modes**: Edit `colligent_core.py`
+- **Customize UI**: Edit `colligent_web_app.py`
+- **Adjust RAG Parameters**: Edit `colligent_config.py`
 
-## 🚀 Deployment Options
+## 🚀 Deployment
 
-### **Streamlit Cloud**
+### **Streamlit Cloud (Recommended)**
 1. Push code to GitHub
 2. Connect to Streamlit Cloud
 3. Deploy automatically
@@ -353,23 +336,10 @@ See `USER_GUIDE.md` for detailed instructions on:
 3. Deploy via Heroku CLI
 
 ### **Docker**
-```dockerfile
-FROM python:3.9-slim
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-COPY . .
-EXPOSE 8501
-CMD ["streamlit", "run", "colligent_web_app.py"]
+```bash
+docker build -t colligent .
+docker run -p 8501:8501 colligent
 ```
-
-## 🤝 Contributing
-
-1. **Fork** the repository
-2. **Create** a feature branch
-3. **Make** your changes
-4. **Test** thoroughly
-5. **Submit** a pull request
 
 ## 📄 License
 
@@ -378,11 +348,3 @@ This project is for personal use and educational purposes.
 ---
 
 **Collins' Personal AI Assistant** | Powered by RAG Technology 🤖✨
-
-## 📹 Video Walkthrough
-
-*[Link to 5-minute video walkthrough explaining the project, features, and technical implementation]*
-
-## 🌐 Live Demo
-
-*[Link to deployed chatbot on Streamlit Cloud, Replit, or similar platform]*
