@@ -5,22 +5,9 @@ from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from langchain_core.prompts import ChatPromptTemplate
 import logging
 
-# Import handling for both local and cloud deployment
-import sys
-import os
-
-# Add current directory to Python path for imports
-current_dir = os.path.dirname(os.path.abspath(__file__))
-if current_dir not in sys.path:
-    sys.path.insert(0, current_dir)
-
-try:
-    from colligent_config import Config
-    from colligent_document_processor import DocumentProcessor
-    from colligent_vector_db import VectorStore
-except ImportError as e:
-    logger.error(f"Import Error: {e}")
-    raise
+from colligent_config import Config
+from colligent_document_processor import DocumentProcessor
+from colligent_vector_db import VectorStore
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -50,34 +37,22 @@ class ContextAwareChatbot:
     def initialize_knowledge_base(self, force_rebuild: bool = False) -> bool:
         """Initialize the knowledge base from documents"""
         try:
-            logger.info("Starting knowledge base initialization...")
-            logger.info(f"Force rebuild: {force_rebuild}")
-            
             # Try to load existing vector store
             if not force_rebuild:
-                logger.info("Attempting to load existing vector store...")
                 existing_store = self.vector_store.load_vector_store()
                 if existing_store:
                     logger.info("Using existing knowledge base")
                     return True
-                else:
-                    logger.info("No existing vector store found, will create new one")
             
             # Process documents and create new vector store
             logger.info("Processing documents and creating knowledge base...")
             documents = self.document_processor.process_documents()
             
-            logger.info(f"Document processing result: {len(documents)} documents")
-            if documents:
-                logger.info(f"First document sample: {documents[0] if documents else 'None'}")
-            
             if not documents:
                 logger.error("No documents found to process")
-                logger.error("This means the data folder is empty or not accessible")
                 return False
             
             # Create vector store
-            logger.info("Creating vector store...")
             vector_store = self.vector_store.create_vector_store(documents)
             if vector_store:
                 logger.info("Knowledge base initialized successfully")
@@ -88,83 +63,28 @@ class ContextAwareChatbot:
                 
         except Exception as e:
             logger.error(f"Error initializing knowledge base: {str(e)}")
-            import traceback
-            logger.error(f"Traceback: {traceback.format_exc()}")
             return False
     
     def get_relevant_context(self, query: str, k: int = 5) -> str:
         """Get relevant context from documents based on query"""
         try:
-            print(f"DEBUG: Starting get_relevant_context for query: {query}")
-            logger.info(f"DEBUG: Starting get_relevant_context for query: {query}")
-            
             # Search for similar documents
             similar_docs = self.vector_store.search_similar(query, k=k)
             
-            print(f"DEBUG: Search returned {len(similar_docs)} documents")
-            logger.info(f"Search returned {len(similar_docs)} documents")
-            if similar_docs:
-                print(f"DEBUG: First document type: {type(similar_docs[0])}")
-                logger.info(f"First document type: {type(similar_docs[0])}")
-                print(f"DEBUG: First document keys: {similar_docs[0].keys() if isinstance(similar_docs[0], dict) else 'Not a dict'}")
-                logger.info(f"First document keys: {similar_docs[0].keys() if isinstance(similar_docs[0], dict) else 'Not a dict'}")
-            
             if not similar_docs:
-                print("DEBUG: No similar documents found")
-                logger.info("DEBUG: No similar documents found")
                 return "No relevant information found in the documents."
             
             # Combine relevant context
             context_parts = []
             for i, doc in enumerate(similar_docs, 1):
-                try:
-                    print(f"DEBUG: Processing document {i}, type: {type(doc)}")
-                    logger.info(f"Processing document {i}, type: {type(doc)}")
-                    
-                    # Handle both Document objects and dictionaries
-                    if hasattr(doc, 'metadata'):
-                        # Document object
-                        print(f"DEBUG: Document {i} is a Document object")
-                        logger.info(f"Document {i} is a Document object")
-                        source = doc.metadata.get('source', 'Unknown')
-                        content = doc.page_content.strip()
-                    elif isinstance(doc, dict):
-                        # Dictionary
-                        print(f"DEBUG: Document {i} is a dict with keys: {list(doc.keys())}")
-                        logger.info(f"Document {i} is a dict with keys: {list(doc.keys())}")
-                        source = doc.get('metadata', {}).get('source', 'Unknown')
-                        content = doc.get('page_content', '').strip()
-                        print(f"DEBUG: Document {i} source: {source}, content length: {len(content)}")
-                        logger.info(f"Document {i} source: {source}, content length: {len(content)}")
-                    else:
-                        # Fallback for any other type
-                        print(f"DEBUG: Unexpected document type: {type(doc)}")
-                        logger.warning(f"Unexpected document type: {type(doc)}")
-                        source = 'Unknown'
-                        content = str(doc)[:500] if doc else ''
-                    
-                    context_parts.append(f"Source {i} ({source}):\n{content}\n")
-                    print(f"DEBUG: Successfully processed document {i}")
-                except Exception as doc_error:
-                    print(f"DEBUG: Error processing document {i}: {doc_error}")
-                    logger.error(f"Error processing document {i}: {doc_error}")
-                    print(f"DEBUG: Document {i} content: {str(doc)[:200]}")
-                    logger.error(f"Document {i} content: {str(doc)[:200]}")
-                    import traceback
-                    print(f"DEBUG: Traceback: {traceback.format_exc()}")
-                    logger.error(f"Traceback: {traceback.format_exc()}")
-                    context_parts.append(f"Source {i} (Error):\n[Document processing error]\n")
+                source = doc.metadata.get('source', 'Unknown')
+                content = doc.page_content.strip()
+                context_parts.append(f"Source {i} ({source}):\n{content}\n")
             
-            result = "\n".join(context_parts)
-            print(f"DEBUG: Final context length: {len(result)}")
-            logger.info(f"DEBUG: Final context length: {len(result)}")
-            return result
+            return "\n".join(context_parts)
             
         except Exception as e:
-            print(f"DEBUG: Error getting relevant context: {str(e)}")
             logger.error(f"Error getting relevant context: {str(e)}")
-            import traceback
-            print(f"DEBUG: Full traceback: {traceback.format_exc()}")
             return "Error retrieving relevant information."
     
     def create_prompt(self, query: str, context: str) -> str:
@@ -454,14 +374,7 @@ Answer:"""
     
     def get_knowledge_base_info(self) -> Dict[str, Any]:
         """Get information about the knowledge base"""
-        try:
-            logger.info("Getting knowledge base info...")
-            info = self.vector_store.get_collection_info()
-            logger.info(f"Knowledge base info: {info}")
-            return info
-        except Exception as e:
-            logger.error(f"Error getting knowledge base info: {e}")
-            return {"error": str(e)}
+        return self.vector_store.get_collection_info()
     
     # Self-Reflective Agent Methods
     

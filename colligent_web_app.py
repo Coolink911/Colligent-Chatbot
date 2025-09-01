@@ -3,22 +3,8 @@ import os
 from typing import Dict, Any
 import time
 
-# Import handling for both local and cloud deployment
-import sys
-import os
-
-# Add current directory to Python path for imports
-current_dir = os.path.dirname(os.path.abspath(__file__))
-if current_dir not in sys.path:
-    sys.path.insert(0, current_dir)
-
-try:
-    from colligent_config import Config
-    from colligent_core import ContextAwareChatbot
-except ImportError as e:
-    st.error(f"Import Error: {e}")
-    st.error("Please check that all required files are present in the repository.")
-    st.stop()
+from colligent_config import Config
+from colligent_core import ContextAwareChatbot
 import re
 import time
 from datetime import datetime, timedelta
@@ -213,7 +199,7 @@ def display_chat_message(message: Dict[str, Any], is_user: bool = False):
             """, unsafe_allow_html=True)
 
 def main():
-    """Main application function - Updated with search fix"""
+    """Main application function"""
     
     # Security checks
     config = Config()
@@ -235,7 +221,7 @@ def main():
     st.session_state.last_activity = datetime.now()
     
     # Header
-    st.markdown('<h1 class="main-header">🤖 ColliGent v2.1</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">🤖 ColliGent</h1>', unsafe_allow_html=True)
     st.markdown('<h3 style="text-align: center;">Hi, I\'m Collins! Ask me anything.</h3>', unsafe_allow_html=True)
     
     # Initialize chatbot
