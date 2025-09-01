@@ -5,9 +5,22 @@ from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from langchain_core.prompts import ChatPromptTemplate
 import logging
 
-from colligent_config import Config
-from colligent_document_processor import DocumentProcessor
-from colligent_vector_db import VectorStore
+# Import handling for both local and cloud deployment
+import sys
+import os
+
+# Add current directory to Python path for imports
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+
+try:
+    from colligent_config import Config
+    from colligent_document_processor import DocumentProcessor
+    from colligent_vector_db import VectorStore
+except ImportError as e:
+    logger.error(f"Import Error: {e}")
+    raise
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

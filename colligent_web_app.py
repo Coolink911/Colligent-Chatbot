@@ -3,8 +3,22 @@ import os
 from typing import Dict, Any
 import time
 
-from colligent_config import Config
-from colligent_core import ContextAwareChatbot
+# Import handling for both local and cloud deployment
+import sys
+import os
+
+# Add current directory to Python path for imports
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+
+try:
+    from colligent_config import Config
+    from colligent_core import ContextAwareChatbot
+except ImportError as e:
+    st.error(f"Import Error: {e}")
+    st.error("Please check that all required files are present in the repository.")
+    st.stop()
 import re
 import time
 from datetime import datetime, timedelta

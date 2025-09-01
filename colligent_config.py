@@ -30,8 +30,8 @@ class Config:
     SESSION_TIMEOUT_MINUTES = 30   # Shorter timeout
     ENABLE_INPUT_VALIDATION = True
     MAX_INPUT_LENGTH = 500         # Reduced for security
-    ENABLE_AUTHENTICATION = True
-    ALLOWED_IPS = ["127.0.0.1", "localhost", "192.168.1.149"]  # Restrict access
+    ENABLE_AUTHENTICATION = False  # Disabled for cloud deployment
+    ALLOWED_IPS = ["*"]  # Allow all IPs for cloud deployment
     ENABLE_LOGGING = True
     LOG_SUSPICIOUS_ACTIVITY = True
     
