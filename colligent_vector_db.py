@@ -281,6 +281,7 @@ class VectorStore:
     def _search_faiss(self, query: str, k: int) -> List[Dict[str, Any]]:
         """Search using FAISS"""
         try:
+            logger.info(f"Searching FAISS for: {query}")
             # Import faiss here
             import faiss
             
@@ -293,9 +294,11 @@ class VectorStore:
                 query_embedding.astype('float32'), k
             )
             
+            logger.info(f"FAISS search returned {len(indices[0])} results")
+            
             # Return results
             documents = []
-            for idx, score in zip(indices[0], scores[0]):
+            for i, (idx, score) in enumerate(zip(indices[0], scores[0])):
                 if idx < len(self.documents):
                     doc = {
                         'page_content': self.documents[idx],
@@ -303,11 +306,17 @@ class VectorStore:
                         'score': float(score)
                     }
                     documents.append(doc)
+                    logger.info(f"FAISS Document {i}: content length={len(doc['page_content'])}, metadata={doc['metadata']}")
+                else:
+                    logger.warning(f"FAISS index {idx} out of range (max: {len(self.documents)})")
             
+            logger.info(f"Returning {len(documents)} documents from FAISS search")
             return documents
             
         except Exception as e:
             logger.error(f"FAISS search failed: {e}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return []
     
     def save_faiss_store(self):

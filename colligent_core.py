@@ -110,15 +110,20 @@ class ContextAwareChatbot:
             context_parts = []
             for i, doc in enumerate(similar_docs, 1):
                 try:
+                    logger.info(f"Processing document {i}, type: {type(doc)}")
+                    
                     # Handle both Document objects and dictionaries
                     if hasattr(doc, 'metadata'):
                         # Document object
+                        logger.info(f"Document {i} is a Document object")
                         source = doc.metadata.get('source', 'Unknown')
                         content = doc.page_content.strip()
                     elif isinstance(doc, dict):
                         # Dictionary
+                        logger.info(f"Document {i} is a dict with keys: {list(doc.keys())}")
                         source = doc.get('metadata', {}).get('source', 'Unknown')
                         content = doc.get('page_content', '').strip()
+                        logger.info(f"Document {i} source: {source}, content length: {len(content)}")
                     else:
                         # Fallback for any other type
                         logger.warning(f"Unexpected document type: {type(doc)}")
@@ -128,6 +133,9 @@ class ContextAwareChatbot:
                     context_parts.append(f"Source {i} ({source}):\n{content}\n")
                 except Exception as doc_error:
                     logger.error(f"Error processing document {i}: {doc_error}")
+                    logger.error(f"Document {i} content: {str(doc)[:200]}")
+                    import traceback
+                    logger.error(f"Traceback: {traceback.format_exc()}")
                     context_parts.append(f"Source {i} (Error):\n[Document processing error]\n")
             
             return "\n".join(context_parts)
