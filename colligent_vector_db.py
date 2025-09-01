@@ -325,3 +325,29 @@ class VectorStore:
             
         except Exception as e:
             logger.error(f"Failed to save FAISS store: {e}")
+    
+    def get_collection_info(self) -> Dict[str, Any]:
+        """Get information about the vector store"""
+        try:
+            if CHROMADB_AVAILABLE and self.collection:
+                # Get ChromaDB collection info
+                count = self.collection.count()
+                return {
+                    "collection_name": "colligent_documents",
+                    "document_count": count,
+                    "embedding_model": self.config.EMBEDDING_MODEL,
+                    "index_type": "ChromaDB"
+                }
+            elif FAISS_AVAILABLE and self.faiss_index is not None:
+                # Get FAISS collection info
+                return {
+                    "collection_name": "faiss_documents",
+                    "document_count": len(self.documents),
+                    "embedding_model": self.config.EMBEDDING_MODEL,
+                    "index_type": "FAISS"
+                }
+            else:
+                return {"error": "Vector store not initialized"}
+        except Exception as e:
+            logger.error(f"Error getting collection info: {e}")
+            return {"error": str(e)}
