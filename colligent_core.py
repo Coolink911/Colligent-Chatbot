@@ -98,22 +98,37 @@ class ContextAwareChatbot:
             # Search for similar documents
             similar_docs = self.vector_store.search_similar(query, k=k)
             
+            logger.info(f"Search returned {len(similar_docs)} documents")
+            if similar_docs:
+                logger.info(f"First document type: {type(similar_docs[0])}")
+                logger.info(f"First document keys: {similar_docs[0].keys() if isinstance(similar_docs[0], dict) else 'Not a dict'}")
+            
             if not similar_docs:
                 return "No relevant information found in the documents."
             
             # Combine relevant context
             context_parts = []
             for i, doc in enumerate(similar_docs, 1):
-                # Handle both Document objects and dictionaries
-                if hasattr(doc, 'metadata'):
-                    # Document object
-                    source = doc.metadata.get('source', 'Unknown')
-                    content = doc.page_content.strip()
-                else:
-                    # Dictionary
-                    source = doc.get('metadata', {}).get('source', 'Unknown')
-                    content = doc.get('page_content', '').strip()
-                context_parts.append(f"Source {i} ({source}):\n{content}\n")
+                try:
+                    # Handle both Document objects and dictionaries
+                    if hasattr(doc, 'metadata'):
+                        # Document object
+                        source = doc.metadata.get('source', 'Unknown')
+                        content = doc.page_content.strip()
+                    elif isinstance(doc, dict):
+                        # Dictionary
+                        source = doc.get('metadata', {}).get('source', 'Unknown')
+                        content = doc.get('page_content', '').strip()
+                    else:
+                        # Fallback for any other type
+                        logger.warning(f"Unexpected document type: {type(doc)}")
+                        source = 'Unknown'
+                        content = str(doc)[:500] if doc else ''
+                    
+                    context_parts.append(f"Source {i} ({source}):\n{content}\n")
+                except Exception as doc_error:
+                    logger.error(f"Error processing document {i}: {doc_error}")
+                    context_parts.append(f"Source {i} (Error):\n[Document processing error]\n")
             
             return "\n".join(context_parts)
             
