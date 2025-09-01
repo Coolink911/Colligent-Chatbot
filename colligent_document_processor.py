@@ -93,8 +93,17 @@ class DocumentProcessor:
         logger.info(f"Split {len(documents)} documents into {len(chunks)} chunks")
         return chunks
     
-    def process_documents(self) -> List[Document]:
+    def process_documents(self) -> List[Dict[str, Any]]:
         """Complete document processing pipeline"""
         documents = self.load_documents()
         chunks = self.split_documents(documents)
-        return chunks
+        
+        # Convert to format expected by vector database
+        processed_chunks = []
+        for chunk in chunks:
+            processed_chunks.append({
+                'content': chunk.page_content,
+                'metadata': chunk.metadata
+            })
+        
+        return processed_chunks
