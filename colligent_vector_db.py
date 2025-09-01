@@ -229,24 +229,36 @@ class VectorStore:
     def search_similar(self, query: str, k: int = 5) -> List[Dict[str, Any]]:
         """Search for similar documents"""
         try:
+            logger.info(f"Starting search for: {query}")
+            logger.info(f"CHROMADB_AVAILABLE: {CHROMADB_AVAILABLE}, collection: {self.collection is not None}")
+            logger.info(f"FAISS_AVAILABLE: {FAISS_AVAILABLE}, faiss_index: {self.faiss_index is not None}")
+            
             if CHROMADB_AVAILABLE and self.collection:
+                logger.info("Using ChromaDB for search")
                 return self._search_chromadb(query, k)
             elif FAISS_AVAILABLE and self.faiss_index is not None:
+                logger.info("Using FAISS for search")
                 return self._search_faiss(query, k)
             else:
                 logger.warning("No vector store available for search")
                 return []
         except Exception as e:
             logger.error(f"Search error: {e}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return []
     
     def _search_chromadb(self, query: str, k: int) -> List[Dict[str, Any]]:
         """Search using ChromaDB"""
         try:
+            logger.info(f"Searching ChromaDB for: {query}")
             results = self.collection.query(
                 query_texts=[query],
                 n_results=k
             )
+            
+            logger.info(f"ChromaDB results keys: {results.keys()}")
+            logger.info(f"Documents found: {len(results['documents'][0]) if results['documents'] else 0}")
             
             documents = []
             for i in range(len(results['documents'][0])):
@@ -255,11 +267,15 @@ class VectorStore:
                     'metadata': results['metadatas'][0][i] if results['metadatas'] else {}
                 }
                 documents.append(doc)
+                logger.info(f"Document {i}: content length={len(doc['page_content'])}, metadata={doc['metadata']}")
             
+            logger.info(f"Returning {len(documents)} documents from ChromaDB search")
             return documents
             
         except Exception as e:
             logger.error(f"ChromaDB search failed: {e}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return []
     
     def _search_faiss(self, query: str, k: int) -> List[Dict[str, Any]]:
