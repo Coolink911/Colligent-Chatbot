@@ -229,17 +229,23 @@ class VectorStore:
     def search_similar(self, query: str, k: int = 5) -> List[Dict[str, Any]]:
         """Search for similar documents"""
         try:
+            print(f"DEBUG: Starting search for: {query}")
             logger.info(f"Starting search for: {query}")
+            print(f"DEBUG: CHROMADB_AVAILABLE: {CHROMADB_AVAILABLE}, collection: {self.collection is not None}")
             logger.info(f"CHROMADB_AVAILABLE: {CHROMADB_AVAILABLE}, collection: {self.collection is not None}")
+            print(f"DEBUG: FAISS_AVAILABLE: {FAISS_AVAILABLE}, faiss_index: {self.faiss_index is not None}")
             logger.info(f"FAISS_AVAILABLE: {FAISS_AVAILABLE}, faiss_index: {self.faiss_index is not None}")
             
             if CHROMADB_AVAILABLE and self.collection:
+                print("DEBUG: Using ChromaDB for search")
                 logger.info("Using ChromaDB for search")
                 return self._search_chromadb(query, k)
             elif FAISS_AVAILABLE and self.faiss_index is not None:
+                print("DEBUG: Using FAISS for search")
                 logger.info("Using FAISS for search")
                 return self._search_faiss(query, k)
             else:
+                print("DEBUG: No vector store available for search")
                 logger.warning("No vector store available for search")
                 return []
         except Exception as e:

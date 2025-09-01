@@ -95,53 +95,76 @@ class ContextAwareChatbot:
     def get_relevant_context(self, query: str, k: int = 5) -> str:
         """Get relevant context from documents based on query"""
         try:
+            print(f"DEBUG: Starting get_relevant_context for query: {query}")
+            logger.info(f"DEBUG: Starting get_relevant_context for query: {query}")
+            
             # Search for similar documents
             similar_docs = self.vector_store.search_similar(query, k=k)
             
+            print(f"DEBUG: Search returned {len(similar_docs)} documents")
             logger.info(f"Search returned {len(similar_docs)} documents")
             if similar_docs:
+                print(f"DEBUG: First document type: {type(similar_docs[0])}")
                 logger.info(f"First document type: {type(similar_docs[0])}")
+                print(f"DEBUG: First document keys: {similar_docs[0].keys() if isinstance(similar_docs[0], dict) else 'Not a dict'}")
                 logger.info(f"First document keys: {similar_docs[0].keys() if isinstance(similar_docs[0], dict) else 'Not a dict'}")
             
             if not similar_docs:
+                print("DEBUG: No similar documents found")
+                logger.info("DEBUG: No similar documents found")
                 return "No relevant information found in the documents."
             
             # Combine relevant context
             context_parts = []
             for i, doc in enumerate(similar_docs, 1):
                 try:
+                    print(f"DEBUG: Processing document {i}, type: {type(doc)}")
                     logger.info(f"Processing document {i}, type: {type(doc)}")
                     
                     # Handle both Document objects and dictionaries
                     if hasattr(doc, 'metadata'):
                         # Document object
+                        print(f"DEBUG: Document {i} is a Document object")
                         logger.info(f"Document {i} is a Document object")
                         source = doc.metadata.get('source', 'Unknown')
                         content = doc.page_content.strip()
                     elif isinstance(doc, dict):
                         # Dictionary
+                        print(f"DEBUG: Document {i} is a dict with keys: {list(doc.keys())}")
                         logger.info(f"Document {i} is a dict with keys: {list(doc.keys())}")
                         source = doc.get('metadata', {}).get('source', 'Unknown')
                         content = doc.get('page_content', '').strip()
+                        print(f"DEBUG: Document {i} source: {source}, content length: {len(content)}")
                         logger.info(f"Document {i} source: {source}, content length: {len(content)}")
                     else:
                         # Fallback for any other type
+                        print(f"DEBUG: Unexpected document type: {type(doc)}")
                         logger.warning(f"Unexpected document type: {type(doc)}")
                         source = 'Unknown'
                         content = str(doc)[:500] if doc else ''
                     
                     context_parts.append(f"Source {i} ({source}):\n{content}\n")
+                    print(f"DEBUG: Successfully processed document {i}")
                 except Exception as doc_error:
+                    print(f"DEBUG: Error processing document {i}: {doc_error}")
                     logger.error(f"Error processing document {i}: {doc_error}")
+                    print(f"DEBUG: Document {i} content: {str(doc)[:200]}")
                     logger.error(f"Document {i} content: {str(doc)[:200]}")
                     import traceback
+                    print(f"DEBUG: Traceback: {traceback.format_exc()}")
                     logger.error(f"Traceback: {traceback.format_exc()}")
                     context_parts.append(f"Source {i} (Error):\n[Document processing error]\n")
             
-            return "\n".join(context_parts)
+            result = "\n".join(context_parts)
+            print(f"DEBUG: Final context length: {len(result)}")
+            logger.info(f"DEBUG: Final context length: {len(result)}")
+            return result
             
         except Exception as e:
+            print(f"DEBUG: Error getting relevant context: {str(e)}")
             logger.error(f"Error getting relevant context: {str(e)}")
+            import traceback
+            print(f"DEBUG: Full traceback: {traceback.format_exc()}")
             return "Error retrieving relevant information."
     
     def create_prompt(self, query: str, context: str) -> str:
