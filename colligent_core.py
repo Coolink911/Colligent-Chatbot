@@ -104,8 +104,15 @@ class ContextAwareChatbot:
             # Combine relevant context
             context_parts = []
             for i, doc in enumerate(similar_docs, 1):
-                source = doc.metadata.get('source', 'Unknown')
-                content = doc.page_content.strip()
+                # Handle both Document objects and dictionaries
+                if hasattr(doc, 'metadata'):
+                    # Document object
+                    source = doc.metadata.get('source', 'Unknown')
+                    content = doc.page_content.strip()
+                else:
+                    # Dictionary
+                    source = doc.get('metadata', {}).get('source', 'Unknown')
+                    content = doc.get('page_content', '').strip()
                 context_parts.append(f"Source {i} ({source}):\n{content}\n")
             
             return "\n".join(context_parts)
