@@ -213,7 +213,7 @@ def display_chat_message(message: Dict[str, Any], is_user: bool = False):
             """, unsafe_allow_html=True)
 
 def main():
-    """Main application function"""
+    """Main application function - Updated with search fix"""
     
     # Security checks
     config = Config()
@@ -235,7 +235,7 @@ def main():
     st.session_state.last_activity = datetime.now()
     
     # Header
-    st.markdown('<h1 class="main-header">🤖 ColliGent</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">🤖 ColliGent v2.1</h1>', unsafe_allow_html=True)
     st.markdown('<h3 style="text-align: center;">Hi, I\'m Collins! Ask me anything.</h3>', unsafe_allow_html=True)
     
     # Initialize chatbot
