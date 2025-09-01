@@ -12,12 +12,12 @@ class Config:
     OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
     
     # Vector Database Configuration
-    VECTOR_DB_PATH = "vector_db"
+    VECTOR_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "vector_db")
     CHUNK_SIZE = 1000
     CHUNK_OVERLAP = 200
     
     # Document Processing
-    DATA_FOLDER = "data"
+    DATA_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
     SUPPORTED_FORMATS = [".pdf", ".txt", ".docx"]
     
     # Chatbot Configuration

@@ -50,22 +50,34 @@ class ContextAwareChatbot:
     def initialize_knowledge_base(self, force_rebuild: bool = False) -> bool:
         """Initialize the knowledge base from documents"""
         try:
+            logger.info("Starting knowledge base initialization...")
+            logger.info(f"Force rebuild: {force_rebuild}")
+            
             # Try to load existing vector store
             if not force_rebuild:
+                logger.info("Attempting to load existing vector store...")
                 existing_store = self.vector_store.load_vector_store()
                 if existing_store:
                     logger.info("Using existing knowledge base")
                     return True
+                else:
+                    logger.info("No existing vector store found, will create new one")
             
             # Process documents and create new vector store
             logger.info("Processing documents and creating knowledge base...")
             documents = self.document_processor.process_documents()
             
+            logger.info(f"Document processing result: {len(documents)} documents")
+            if documents:
+                logger.info(f"First document sample: {documents[0] if documents else 'None'}")
+            
             if not documents:
                 logger.error("No documents found to process")
+                logger.error("This means the data folder is empty or not accessible")
                 return False
             
             # Create vector store
+            logger.info("Creating vector store...")
             vector_store = self.vector_store.create_vector_store(documents)
             if vector_store:
                 logger.info("Knowledge base initialized successfully")
@@ -76,6 +88,8 @@ class ContextAwareChatbot:
                 
         except Exception as e:
             logger.error(f"Error initializing knowledge base: {str(e)}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return False
     
     def get_relevant_context(self, query: str, k: int = 5) -> str:
