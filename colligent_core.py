@@ -401,7 +401,14 @@ Answer:"""
     
     def get_knowledge_base_info(self) -> Dict[str, Any]:
         """Get information about the knowledge base"""
-        return self.vector_store.get_collection_info()
+        try:
+            logger.info("Getting knowledge base info...")
+            info = self.vector_store.get_collection_info()
+            logger.info(f"Knowledge base info: {info}")
+            return info
+        except Exception as e:
+            logger.error(f"Error getting knowledge base info: {e}")
+            return {"error": str(e)}
     
     # Self-Reflective Agent Methods
     
