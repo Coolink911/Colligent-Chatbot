@@ -1,0 +1,12 @@
+streamlit
+langchain
+langchain-openai
+openai
+chromadb
+pypdf2
+python-dotenv
+sentence-transformers
+faiss-cpu
+numpy
+pandas
+tiktoken
