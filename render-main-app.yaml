@@ -3,7 +3,7 @@ services:
     name: colligent-main-app
     env: python
     plan: free
-    buildCommand: pip install -r requirements-render.txt
+    buildCommand: pip install -r requirements-render-flexible.txt
     startCommand: streamlit run colligent_web_app.py --server.port=$PORT --server.address=0.0.0.0
     envVars:
       - key: PYTHON_VERSION
