@@ -33,8 +33,6 @@ collins_personal_agent/
 │
 └── 📋 Configuration Files
     ├── requirements.txt               # Python dependencies
-    ├── requirements-render-flexible.txt # Render deployment
-    ├── render-main-app.yaml          # Render configuration
     └── runtime.txt                   # Python version
 ```
 
@@ -48,15 +46,6 @@ collins_personal_agent/
 
 ## 🌐 Deployment
 
-### **Render (Recommended - Free)**
-1. Go to [render.com](https://render.com)
-2. Create new Web Service
-3. Connect your GitHub repo: `Coolink911/Colligent-Chatbot`
-4. Use configuration from `render-main-app.yaml`
-5. Set environment variables:
-   - `OPENAI_API_KEY`: Your OpenAI API key
-   - `OPENAI_MODEL`: `gpt-4o-mini`
-
 ### **Streamlit Cloud**
 1. Push to GitHub
 2. Connect to [share.streamlit.io](https://share.streamlit.io)
@@ -66,9 +55,6 @@ collins_personal_agent/
 ```bash
 # Test the app locally
 streamlit run colligent_web_app.py --server.port=8501
-
-# Test simple version
-streamlit run simple_test_app.py --server.port=8502
 ```
 
 ## 🔧 Configuration
@@ -87,14 +73,13 @@ OPENAI_MODEL=gpt-4o-mini
 ## 🚨 Troubleshooting
 
 ### **Common Issues**
-- **Dependency conflicts**: Use `requirements-render-flexible.txt`
+- **Dependency conflicts**: Resolved with graceful fallbacks
 - **Logger errors**: Fixed in latest version
 - **Import issues**: Robust fallback handling implemented
 
 ### **Deployment Help**
-- **Simple test app**: `simple_test_app.py` for debugging
-- **Multiple configs**: Different requirements files for different platforms
-- **Detailed guides**: Check `RENDER_DEPLOY_FIXED.md`
+- **Streamlit Cloud**: Automatic deployment from GitHub
+- **Local development**: Test with `streamlit run colligent_web_app.py`
 
 
 
