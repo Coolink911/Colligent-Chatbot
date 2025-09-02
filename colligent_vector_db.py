@@ -35,9 +35,9 @@ def is_chromadb_available():
 # Try to import config, but don't fail if it doesn't work
 try:
     from colligent_config import Config
-    logger.info("Successfully imported colligent_config")
+    print("Successfully imported colligent_config")
 except ImportError as e:
-    logger.warning(f"Failed to import colligent_config: {e}, using fallback")
+    print(f"Failed to import colligent_config: {e}, using fallback")
     # Create a minimal config class if import fails
     class Config:
         def __init__(self):
