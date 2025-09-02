@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: colligent-simple-test
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements-simple.txt
+    startCommand: streamlit run simple_test_app.py --server.port=$PORT --server.address=0.0.0.0
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.7
+      - key: PORT
+        value: 10000
