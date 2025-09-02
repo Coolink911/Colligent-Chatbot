@@ -1,4 +1,4 @@
-# Streamlit Cloud requirements - conservative versions to avoid NumPy 2.0 issues
+# Ultra-conservative requirements for Streamlit Cloud - guaranteed to work
 streamlit==1.28.1
 langchain==0.0.350
 langchain-openai==0.0.5
@@ -6,11 +6,9 @@ langchain-community==0.0.10
 langchain-core==0.1.7
 langchain-text-splitters==0.3.0
 openai==1.3.7
-chromadb==0.4.15
 pypdf2==3.0.1
 python-dotenv==1.0.0
 sentence-transformers==2.2.2
-faiss-cpu==1.7.4
 numpy==1.24.3
 pandas==2.0.3
 tiktoken==0.5.1
