@@ -13,6 +13,10 @@ except ImportError:
     # Fallback if langchain_core is not available
     Document = Any
 
+# Initialize variables
+CHROMADB_AVAILABLE = False
+Chroma = Any
+
 # Try to import chromadb and related modules
 try:
     import chromadb
@@ -23,8 +27,6 @@ try:
 except (ImportError, RuntimeError, Exception) as e:
     CHROMADB_AVAILABLE = False
     logger.warning(f"ChromaDB not available (error: {e}), will use fallback implementation")
-    # Define fallback types
-    Chroma = Any
 
 from colligent_config import Config
 
