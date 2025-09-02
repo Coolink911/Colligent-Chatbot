@@ -1,0 +1,6 @@
+# Ultra-minimal requirements - guaranteed to work on Streamlit Cloud
+# Only essential packages, no LangChain to avoid conflicts
+streamlit==1.28.1
+pypdf2==3.0.1
+python-dotenv==1.0.0
+numpy==1.24.3
