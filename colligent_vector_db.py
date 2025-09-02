@@ -11,7 +11,8 @@ logger = logging.getLogger(__name__)
 CHROMADB_AVAILABLE = False
 Chroma = Any
 
-# Always try to import Document first (needed for type hints)
+# Always ensure Document class is available (needed for type hints)
+Document = None
 try:
     from langchain_core.documents import Document
     logger.info("Document class imported successfully")
@@ -22,6 +23,7 @@ except ImportError as e:
         def __init__(self, page_content: str, metadata: Dict[str, Any] = None):
             self.page_content = page_content
             self.metadata = metadata or {}
+    logger.info("Fallback Document class created")
 
 # More aggressive ChromaDB import handling
 try:
