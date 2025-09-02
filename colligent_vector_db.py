@@ -23,6 +23,8 @@ try:
 except (ImportError, RuntimeError, Exception) as e:
     CHROMADB_AVAILABLE = False
     logger.warning(f"ChromaDB not available (error: {e}), will use fallback implementation")
+    # Define fallback types
+    Chroma = Any
 
 from colligent_config import Config
 
@@ -81,8 +83,12 @@ class VectorStore:
             logger.error(f"Error creating vector store: {str(e)}")
             return None
     
-    def load_vector_store(self) -> Chroma:
+    def load_vector_store(self):
         """Load existing vector store"""
+        if not CHROMADB_AVAILABLE:
+            logger.warning("ChromaDB not available, cannot load vector store")
+            return None
+            
         try:
             if os.path.exists(self.config.VECTOR_DB_PATH):
                 vector_db = Chroma(
@@ -100,8 +106,12 @@ class VectorStore:
             logger.error(f"Error loading vector store: {str(e)}")
             return None
     
-    def search_similar(self, query: str, k: int = 5) -> List[Document]:
+    def search_similar(self, query: str, k: int = 5) -> List[Any]:
         """Search for similar documents"""
+        if not CHROMADB_AVAILABLE:
+            logger.warning("ChromaDB not available, using fallback search")
+            return self._fallback_search(query, k)
+            
         if not self.vector_db:
             logger.error("Vector store not initialized")
             return []
@@ -112,10 +122,20 @@ class VectorStore:
             return results
         except Exception as e:
             logger.error(f"Error searching vector store: {str(e)}")
-            return []
+            return self._fallback_search(query, k)
+    
+    def _fallback_search(self, query: str, k: int = 5) -> List[Dict[str, Any]]:
+        """Fallback search when ChromaDB is not available"""
+        logger.info("Using fallback search implementation")
+        # Return empty results for now - this will be handled by the core
+        return []
     
     def search_with_score(self, query: str, k: int = 5) -> List[tuple]:
         """Search for similar documents with similarity scores"""
+        if not CHROMADB_AVAILABLE:
+            logger.warning("ChromaDB not available, using fallback search")
+            return []
+            
         if not self.vector_db:
             logger.error("Vector store not initialized")
             return []
