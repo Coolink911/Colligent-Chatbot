@@ -11,12 +11,23 @@ logger = logging.getLogger(__name__)
 CHROMADB_AVAILABLE = False
 Chroma = Any
 
+# Always try to import Document first (needed for type hints)
+try:
+    from langchain_core.documents import Document
+    logger.info("Document class imported successfully")
+except ImportError as e:
+    logger.warning(f"Failed to import Document class: {e}")
+    # Create a fallback Document class
+    class Document:
+        def __init__(self, page_content: str, metadata: Dict[str, Any] = None):
+            self.page_content = page_content
+            self.metadata = metadata or {}
+
 # More aggressive ChromaDB import handling
 try:
     import chromadb
     from langchain_community.vectorstores import Chroma
     from langchain_community.embeddings import HuggingFaceEmbeddings
-    from langchain_core.documents import Document
     CHROMADB_AVAILABLE = True
     logger.info("ChromaDB successfully imported")
 except (ImportError, AttributeError, RuntimeError) as e:
