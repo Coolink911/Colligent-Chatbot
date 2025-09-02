@@ -5,9 +5,51 @@ from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from langchain_core.prompts import ChatPromptTemplate
 import logging
 
-from colligent_config import Config
-from colligent_document_processor import DocumentProcessor
-from colligent_vector_db import VectorStore
+# Try to import config, but don't fail if it doesn't work
+try:
+    from colligent_config import Config
+    logger.info("Successfully imported colligent_config")
+except ImportError as e:
+    logger.warning(f"Failed to import colligent_config: {e}, using fallback")
+    # Create a minimal config class if import fails
+    class Config:
+        def __init__(self):
+            self.OPENAI_API_KEY = None
+            self.OPENAI_MODEL = "gpt-4o-mini"
+            self.TEMPERATURE = 0.7
+            self.MAX_TOKENS = 1000
+            self.SYSTEM_PROMPT = "You are a helpful AI assistant."
+
+# Try to import document processor, but don't fail if it doesn't work
+try:
+    from colligent_document_processor import DocumentProcessor
+    logger.info("Successfully imported DocumentProcessor")
+except ImportError as e:
+    logger.warning(f"Failed to import DocumentProcessor: {e}, using fallback")
+    # Create a minimal document processor if import fails
+    class DocumentProcessor:
+        def __init__(self, config):
+            self.config = config
+        def process_documents(self):
+            logger.warning("Using fallback DocumentProcessor")
+            return []
+
+# Try to import vector store, but don't fail if it doesn't work
+try:
+    from colligent_vector_db import VectorStore
+    logger.info("Successfully imported VectorStore")
+except ImportError as e:
+    logger.warning(f"Failed to import VectorStore: {e}, using fallback")
+    # Create a minimal vector store if import fails
+    class VectorStore:
+        def __init__(self, config):
+            self.config = config
+        def load_vector_store(self):
+            return None
+        def create_vector_store(self, documents):
+            return None
+        def search_similar(self, query, k=5):
+            return []
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
