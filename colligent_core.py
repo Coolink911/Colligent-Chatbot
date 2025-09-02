@@ -5,6 +5,10 @@ from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from langchain_core.prompts import ChatPromptTemplate
 import logging
 
+# Set up logging first
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Try to import config, but don't fail if it doesn't work
 try:
     from colligent_config import Config
@@ -50,9 +54,6 @@ except ImportError as e:
             return None
         def search_similar(self, query, k=5):
             return []
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 class ContextAwareChatbot:
     """Main chatbot class that handles document-based question answering"""
