@@ -93,19 +93,40 @@ class ContextAwareChatbot:
             
             if not documents:
                 logger.error("No documents found to process")
+                # Provide more detailed error information
+                data_folder = self.config.DATA_FOLDER
+                logger.error(f"Data folder path: {data_folder}")
+                logger.error(f"Data folder exists: {os.path.exists(data_folder)}")
+                if os.path.exists(data_folder):
+                    try:
+                        files = os.listdir(data_folder)
+                        logger.error(f"Files in data folder: {files}")
+                    except Exception as e:
+                        logger.error(f"Error listing data folder: {str(e)}")
                 return False
             
-            # Create vector store
-            vector_store = self.vector_store.create_vector_store(documents)
-            if vector_store:
+            # Create vector store with enhanced error handling
+            logger.info(f"Attempting to create vector store with {len(documents)} documents")
+            vector_store_success = self.vector_store.create_vector_store(documents)
+            
+            if vector_store_success:
                 logger.info("Knowledge base initialized successfully")
                 return True
             else:
-                logger.error("Failed to create vector store")
-                return False
+                logger.error("Failed to create vector store - this should not happen with fallback system")
+                # Even if vector store fails, we should have fallback storage
+                if hasattr(self.vector_store, 'fallback_docs') and len(self.vector_store.fallback_docs) > 0:
+                    logger.info(f"Using fallback storage with {len(self.vector_store.fallback_docs)} documents")
+                    return True
+                else:
+                    logger.error("No fallback storage available")
+                    return False
                 
         except Exception as e:
             logger.error(f"Error initializing knowledge base: {str(e)}")
+            # Log additional debugging information
+            import traceback
+            logger.error(f"Full traceback: {traceback.format_exc()}")
             return False
     
     def get_relevant_context(self, query: str, k: int = 5) -> str:

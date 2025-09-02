@@ -1,212 +1,203 @@
 import os
-from typing import List, Dict, Any
 import logging
+import sys
+from typing import List, Dict, Any, Optional
 
-# Set up logging first
+# Set up logging at the very top
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Import Document type first (needed for type hints)
-try:
-    from langchain_core.documents import Document
-except ImportError:
-    # Fallback if langchain_core is not available
-    Document = Any
-
-# Initialize variables
+# Initialize fallback variables at module level
 CHROMADB_AVAILABLE = False
 Chroma = Any
 
-# Try to import chromadb and related modules
 try:
     import chromadb
     from langchain_community.vectorstores import Chroma
     from langchain_community.embeddings import HuggingFaceEmbeddings
+    from langchain_core.documents import Document
     CHROMADB_AVAILABLE = True
     logger.info("ChromaDB successfully imported")
-except (ImportError, RuntimeError, Exception) as e:
+except ImportError as e:
+    logger.warning(f"ChromaDB import failed: {e}")
     CHROMADB_AVAILABLE = False
-    logger.warning(f"ChromaDB not available (error: {e}), will use fallback implementation")
+    Chroma = Any
 
-# Create a function to check if ChromaDB is available
 def is_chromadb_available():
+    """Check if ChromaDB is available"""
     return CHROMADB_AVAILABLE
 
-# Try to import config, but don't fail if it doesn't work
-try:
-    from colligent_config import Config
-    print("Successfully imported colligent_config")
-except ImportError as e:
-    print(f"Failed to import colligent_config: {e}, using fallback")
-    # Create a minimal config class if import fails
-    class Config:
-        def __init__(self):
-            # Don't use logger here to avoid dependency issues
-            self.EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
-            self.VECTOR_DB_PATH = "vector_db"
-            self.DATA_FOLDER = "data"
-
 class VectorStore:
-    """Manages vector database operations for document storage and retrieval"""
+    """Vector database operations with robust fallback system"""
     
-    def __init__(self, config: Config):
-        logger.info("Initializing VectorStore")
-        chromadb_available = is_chromadb_available()
-        logger.info(f"CHROMADB_AVAILABLE: {chromadb_available}")
+    def __init__(self, config):
         self.config = config
+        self.embeddings = None
+        self.vector_db = None
+        self.fallback_docs = []
         
-        # Initialize embeddings only if ChromaDB is available
-        if chromadb_available:
-            try:
-                from langchain_community.embeddings import HuggingFaceEmbeddings
-                logger.info(f"Creating embeddings with model: {config.EMBEDDING_MODEL}")
+        try:
+            if CHROMADB_AVAILABLE:
+                logger.info("Initializing VectorStore with ChromaDB")
                 self.embeddings = HuggingFaceEmbeddings(
-                    model_name=config.EMBEDDING_MODEL,
-                    model_kwargs={'device': 'cpu'}
+                    model_name=self.config.EMBEDDING_MODEL
                 )
                 logger.info("Embeddings created successfully")
-            except Exception as e:
-                logging.error(f"Failed to initialize embeddings: {e}")
-                # Don't modify global variable, just set local embeddings to None
-                self.embeddings = None
-        else:
-            logger.info("ChromaDB not available, setting embeddings to None")
-            self.embeddings = None
-            
-        self.vector_db = None
-        self.collection_name = "documents"
-        logger.info("VectorStore initialization complete")
+            else:
+                logger.warning("ChromaDB not available, using fallback mode")
+                self._setup_fallback()
+        except Exception as e:
+            logger.error(f"Error initializing embeddings: {e}")
+            self._setup_fallback()
     
-    def create_vector_store(self, documents: List[Any]):
-        """Create a new vector store from documents"""
-        if not documents:
-            logger.warning("No documents provided for vector store creation")
-            return None
-        
-        if not is_chromadb_available():
-            logger.warning("ChromaDB not available, cannot create vector store")
-            return None
-        
+    def _setup_fallback(self):
+        """Setup fallback document storage"""
+        logger.info("Setting up fallback document storage")
+        self.fallback_docs = []
+    
+    def create_vector_store(self, documents: List[Document]) -> bool:
+        """Create vector store with robust fallback"""
         try:
-            # Create vector store directory if it doesn't exist
-            os.makedirs(self.config.VECTOR_DB_PATH, exist_ok=True)
+            if not CHROMADB_AVAILABLE:
+                logger.warning("ChromaDB not available, using fallback storage")
+                return self._fallback_create_store(documents)
             
-            # Create the vector store
-            vector_db = Chroma.from_documents(
+            if not documents:
+                logger.error("No documents provided for vector store creation")
+                return False
+            
+            logger.info(f"Creating ChromaDB vector store with {len(documents)} documents")
+            
+            # Create ChromaDB vector store
+            vector_db = Chroma(
                 documents=documents,
                 embedding=self.embeddings,
-                persist_directory=self.config.VECTOR_DB_PATH,
-                collection_name=self.collection_name
+                persist_directory=self.config.VECTOR_DB_PATH
             )
             
-            # Vector store is automatically persisted in Chroma 0.4.x+
+            # Persist the vector store
+            vector_db.persist()
             
-            logger.info(f"Created vector store with {len(documents)} documents")
             self.vector_db = vector_db
-            return vector_db
+            logger.info("ChromaDB vector store created successfully")
+            return True
             
         except Exception as e:
-            logger.error(f"Error creating vector store: {str(e)}")
-            return None
+            logger.error(f"Failed to create ChromaDB vector store: {e}")
+            logger.info("Falling back to simple document storage")
+            return self._fallback_create_store(documents)
     
-    def load_vector_store(self):
-        """Load existing vector store"""
-        if not is_chromadb_available():
-            logger.warning("ChromaDB not available, cannot load vector store")
-            return None
-            
+    def _fallback_create_store(self, documents: List[Document]) -> bool:
+        """Fallback storage when ChromaDB fails"""
         try:
-            if os.path.exists(self.config.VECTOR_DB_PATH):
-                vector_db = Chroma(
-                    persist_directory=self.config.VECTOR_DB_PATH,
-                    embedding_function=self.embeddings,
-                    collection_name=self.collection_name
-                )
-                logger.info("Loaded existing vector store")
-                self.vector_db = vector_db
-                return vector_db
-            else:
+            logger.info(f"Creating fallback storage with {len(documents)} documents")
+            self.fallback_docs = documents
+            logger.info("Fallback storage created successfully")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to create fallback storage: {e}")
+            return False
+    
+    def load_vector_store(self) -> bool:
+        """Load existing vector store with fallback"""
+        try:
+            if not CHROMADB_AVAILABLE:
+                logger.info("ChromaDB not available, checking fallback storage")
+                return len(self.fallback_docs) > 0
+            
+            if not os.path.exists(self.config.VECTOR_DB_PATH):
                 logger.info("No existing vector store found")
-                return None
-        except Exception as e:
-            logger.error(f"Error loading vector store: {str(e)}")
-            return None
-    
-    def search_similar(self, query: str, k: int = 5) -> List[Any]:
-        """Search for similar documents"""
-        if not is_chromadb_available():
-            logger.warning("ChromaDB not available, using fallback search")
-            return self._fallback_search(query, k)
+                return False
             
-        if not self.vector_db:
-            logger.error("Vector store not initialized")
-            return []
-        
-        try:
-            results = self.vector_db.similarity_search(query, k=k)
-            logger.info(f"Found {len(results)} similar documents for query: {query[:50]}...")
-            return results
+            logger.info("Loading existing ChromaDB vector store")
+            self.vector_db = Chroma(
+                persist_directory=self.config.VECTOR_DB_PATH,
+                embedding_function=self.embeddings
+            )
+            logger.info("Existing vector store loaded successfully")
+            return True
+            
         except Exception as e:
-            logger.error(f"Error searching vector store: {str(e)}")
+            logger.error(f"Error loading existing vector store: {e}")
+            logger.info("Falling back to simple storage")
+            return len(self.fallback_docs) > 0
+    
+    def search_similar(self, query: str, k: int = 5) -> List[Document]:
+        """Search for similar documents with fallback"""
+        try:
+            if CHROMADB_AVAILABLE and self.vector_db:
+                logger.info(f"Searching ChromaDB for: {query[:50]}...")
+                results = self.vector_db.similarity_search(query, k=k)
+                logger.info(f"Found {len(results)} similar documents")
+                return results
+            else:
+                logger.info("Using fallback search")
+                return self._fallback_search(query, k)
+                
+        except Exception as e:
+            logger.error(f"Error in similarity search: {e}")
+            logger.info("Using fallback search due to error")
             return self._fallback_search(query, k)
     
-    def _fallback_search(self, query: str, k: int = 5) -> List[Dict[str, Any]]:
-        """Fallback search when ChromaDB is not available"""
-        logger.info("Using fallback search implementation")
-        # Return empty results for now - this will be handled by the core
-        return []
-    
-    def search_with_score(self, query: str, k: int = 5) -> List[tuple]:
-        """Search for similar documents with similarity scores"""
-        if not is_chromadb_available():
-            logger.warning("ChromaDB not available, using fallback search")
-            return []
-            
-        if not self.vector_db:
-            logger.error("Vector store not initialized")
-            return []
-        
+    def _fallback_search(self, query: str, k: int = 5) -> List[Document]:
+        """Simple fallback search when vector search fails"""
         try:
-            results = self.vector_db.similarity_search_with_score(query, k=k)
-            logger.info(f"Found {len(results)} similar documents with scores for query: {query[:50]}...")
+            if not self.fallback_docs:
+                logger.warning("No documents available for fallback search")
+                return []
+            
+            # Simple keyword-based search as fallback
+            query_lower = query.lower()
+            relevant_docs = []
+            
+            for doc in self.fallback_docs:
+                content_lower = doc.page_content.lower()
+                # Check if query words appear in document
+                query_words = query_lower.split()
+                relevance_score = sum(1 for word in query_words if word in content_lower)
+                
+                if relevance_score > 0:
+                    relevant_docs.append((doc, relevance_score))
+            
+            # Sort by relevance and return top k
+            relevant_docs.sort(key=lambda x: x[1], reverse=True)
+            results = [doc for doc, score in relevant_docs[:k]]
+            
+            logger.info(f"Fallback search found {len(results)} relevant documents")
             return results
+            
         except Exception as e:
-            logger.error(f"Error searching vector store with scores: {str(e)}")
+            logger.error(f"Error in fallback search: {e}")
             return []
     
     def get_collection_info(self) -> Dict[str, Any]:
-        """Get information about the vector store collection"""
-        if not is_chromadb_available():
-            return {
-                "collection_name": "fallback_documents",
-                "document_count": 0,
-                "embedding_model": "fallback",
-                "index_type": "FAISS"
-            }
-        
-        if not self.vector_db:
-            return {"error": "Vector store not initialized"}
-        
+        """Get collection information with fallback"""
         try:
-            collection = self.vector_db._collection
-            count = collection.count()
-            return {
-                "collection_name": self.collection_name,
-                "document_count": count,
-                "embedding_model": self.config.EMBEDDING_MODEL,
-                "index_type": "ChromaDB"
-            }
+            if CHROMADB_AVAILABLE and self.vector_db:
+                # Try to get ChromaDB collection info
+                try:
+                    collection = self.vector_db._collection
+                    return {
+                        'collection_name': collection.name,
+                        'document_count': collection.count(),
+                        'embedding_model': self.config.EMBEDDING_MODEL,
+                        'index_type': 'ChromaDB'
+                    }
+                except Exception as e:
+                    logger.warning(f"Could not get ChromaDB collection info: {e}")
+                    return self._fallback_collection_info()
+            else:
+                return self._fallback_collection_info()
+                
         except Exception as e:
-            logger.error(f"Error getting collection info: {str(e)}")
-            return {"error": str(e)}
+            logger.error(f"Error getting collection info: {e}")
+            return self._fallback_collection_info()
     
-    def delete_vector_store(self):
-        """Delete the vector store"""
-        try:
-            import shutil
-            if os.path.exists(self.config.VECTOR_DB_PATH):
-                shutil.rmtree(self.config.VECTOR_DB_PATH)
-                logger.info("Deleted vector store")
-                self.vector_db = None
-        except Exception as e:
-            logger.error(f"Error deleting vector store: {str(e)}")
+    def _fallback_collection_info(self) -> Dict[str, Any]:
+        """Fallback collection information"""
+        return {
+            'collection_name': 'fallback_documents',
+            'document_count': len(self.fallback_docs),
+            'embedding_model': self.config.EMBEDDING_MODEL,
+            'index_type': 'Fallback Storage'
+        }
