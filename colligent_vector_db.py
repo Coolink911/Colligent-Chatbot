@@ -2,6 +2,10 @@ import os
 from typing import List, Dict, Any
 import logging
 
+# Set up logging first
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Import Document type first (needed for type hints)
 try:
     from langchain_core.documents import Document
@@ -16,14 +20,11 @@ try:
     from langchain_community.embeddings import HuggingFaceEmbeddings
     CHROMADB_AVAILABLE = True
     logger.info("ChromaDB successfully imported")
-except (ImportError, RuntimeError) as e:
+except (ImportError, RuntimeError, Exception) as e:
     CHROMADB_AVAILABLE = False
     logger.warning(f"ChromaDB not available (error: {e}), will use fallback implementation")
 
 from colligent_config import Config
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 class VectorStore:
     """Manages vector database operations for document storage and retrieval"""

@@ -18,7 +18,7 @@ Your Colligent AI chatbot can be deployed on multiple platforms. Choose the opti
 5. **Configure**:
    - **Name**: `colligent-chatbot`
    - **Environment**: `Python`
-   - **Build Command**: `pip install -r requirements.txt`
+   - **Build Command**: `pip install -r requirements.txt` (or `pip install -r requirements-no-chromadb.txt` if you have SQLite issues)
    - **Start Command**: `streamlit run colligent_web_app.py --server.port=$PORT --server.address=0.0.0.0`
 6. **Add Environment Variables**:
    - `OPENAI_API_KEY`: Your OpenAI API key
