@@ -2,16 +2,23 @@ import os
 from typing import List, Dict, Any
 import logging
 
+# Import Document type first (needed for type hints)
+try:
+    from langchain_core.documents import Document
+except ImportError:
+    # Fallback if langchain_core is not available
+    Document = Any
+
 # Try to import chromadb and related modules
 try:
     import chromadb
     from langchain_community.vectorstores import Chroma
     from langchain_community.embeddings import HuggingFaceEmbeddings
-    from langchain_core.documents import Document
     CHROMADB_AVAILABLE = True
+    logger.info("ChromaDB successfully imported")
 except (ImportError, RuntimeError) as e:
     CHROMADB_AVAILABLE = False
-    logging.warning(f"ChromaDB not available (error: {e}), will use FAISS fallback")
+    logger.warning(f"ChromaDB not available (error: {e}), will use fallback implementation")
 
 from colligent_config import Config
 
@@ -41,7 +48,7 @@ class VectorStore:
         self.vector_db = None
         self.collection_name = "documents"
     
-    def create_vector_store(self, documents: List[Document]):
+    def create_vector_store(self, documents: List[Any]):
         """Create a new vector store from documents"""
         if not documents:
             logger.warning("No documents provided for vector store creation")
