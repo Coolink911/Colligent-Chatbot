@@ -28,7 +28,16 @@ except (ImportError, RuntimeError, Exception) as e:
     CHROMADB_AVAILABLE = False
     logger.warning(f"ChromaDB not available (error: {e}), will use fallback implementation")
 
-from colligent_config import Config
+# Try to import config, but don't fail if it doesn't work
+try:
+    from colligent_config import Config
+except ImportError:
+    # Create a minimal config class if import fails
+    class Config:
+        def __init__(self):
+            self.EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+            self.VECTOR_DB_PATH = "vector_db"
+            self.DATA_FOLDER = "data"
 
 class VectorStore:
     """Manages vector database operations for document storage and retrieval"""
@@ -153,6 +162,14 @@ class VectorStore:
     
     def get_collection_info(self) -> Dict[str, Any]:
         """Get information about the vector store collection"""
+        if not CHROMADB_AVAILABLE:
+            return {
+                "collection_name": "fallback_documents",
+                "document_count": 0,
+                "embedding_model": "fallback",
+                "index_type": "FAISS"
+            }
+        
         if not self.vector_db:
             return {"error": "Vector store not initialized"}
         
@@ -162,7 +179,8 @@ class VectorStore:
             return {
                 "collection_name": self.collection_name,
                 "document_count": count,
-                "embedding_model": self.config.EMBEDDING_MODEL
+                "embedding_model": self.config.EMBEDDING_MODEL,
+                "index_type": "ChromaDB"
             }
         except Exception as e:
             logger.error(f"Error getting collection info: {str(e)}")
