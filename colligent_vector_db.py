@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 CHROMADB_AVAILABLE = False
 Chroma = Any
 
+# More aggressive ChromaDB import handling
 try:
     import chromadb
     from langchain_community.vectorstores import Chroma
@@ -18,7 +19,7 @@ try:
     from langchain_core.documents import Document
     CHROMADB_AVAILABLE = True
     logger.info("ChromaDB successfully imported")
-except ImportError as e:
+except (ImportError, AttributeError, RuntimeError) as e:
     logger.warning(f"ChromaDB import failed: {e}")
     CHROMADB_AVAILABLE = False
     Chroma = Any
