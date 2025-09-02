@@ -1,10 +1,17 @@
 import os
-import chromadb
 from typing import List, Dict, Any
-from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_core.documents import Document
 import logging
+
+# Try to import chromadb and related modules
+try:
+    import chromadb
+    from langchain_community.vectorstores import Chroma
+    from langchain_community.embeddings import HuggingFaceEmbeddings
+    from langchain_core.documents import Document
+    CHROMADB_AVAILABLE = True
+except (ImportError, RuntimeError) as e:
+    CHROMADB_AVAILABLE = False
+    logging.warning(f"ChromaDB not available (error: {e}), will use FAISS fallback")
 
 from colligent_config import Config
 
@@ -16,17 +23,32 @@ class VectorStore:
     
     def __init__(self, config: Config):
         self.config = config
-        self.embeddings = HuggingFaceEmbeddings(
-            model_name=config.EMBEDDING_MODEL,
-            model_kwargs={'device': 'cpu'}
-        )
+        
+        # Initialize embeddings only if ChromaDB is available
+        if CHROMADB_AVAILABLE:
+            try:
+                from langchain_community.embeddings import HuggingFaceEmbeddings
+                self.embeddings = HuggingFaceEmbeddings(
+                    model_name=config.EMBEDDING_MODEL,
+                    model_kwargs={'device': 'cpu'}
+                )
+            except Exception as e:
+                logging.error(f"Failed to initialize embeddings: {e}")
+                CHROMADB_AVAILABLE = False
+        else:
+            self.embeddings = None
+            
         self.vector_db = None
         self.collection_name = "documents"
     
-    def create_vector_store(self, documents: List[Document]) -> Chroma:
+    def create_vector_store(self, documents: List[Document]):
         """Create a new vector store from documents"""
         if not documents:
             logger.warning("No documents provided for vector store creation")
+            return None
+        
+        if not CHROMADB_AVAILABLE:
+            logger.warning("ChromaDB not available, cannot create vector store")
             return None
         
         try:
