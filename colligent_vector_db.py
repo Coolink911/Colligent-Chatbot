@@ -46,7 +46,8 @@ class VectorStore:
                 )
             except Exception as e:
                 logging.error(f"Failed to initialize embeddings: {e}")
-                CHROMADB_AVAILABLE = False
+                # Don't modify global variable, just set local embeddings to None
+                self.embeddings = None
         else:
             self.embeddings = None
             
