@@ -28,6 +28,10 @@ except (ImportError, RuntimeError, Exception) as e:
     CHROMADB_AVAILABLE = False
     logger.warning(f"ChromaDB not available (error: {e}), will use fallback implementation")
 
+# Create a function to check if ChromaDB is available
+def is_chromadb_available():
+    return CHROMADB_AVAILABLE
+
 # Try to import config, but don't fail if it doesn't work
 try:
     from colligent_config import Config
@@ -37,7 +41,7 @@ except ImportError as e:
     # Create a minimal config class if import fails
     class Config:
         def __init__(self):
-            logger.info("Creating fallback Config instance")
+            # Don't use logger here to avoid dependency issues
             self.EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
             self.VECTOR_DB_PATH = "vector_db"
             self.DATA_FOLDER = "data"
@@ -47,11 +51,12 @@ class VectorStore:
     
     def __init__(self, config: Config):
         logger.info("Initializing VectorStore")
-        logger.info(f"CHROMADB_AVAILABLE: {CHROMADB_AVAILABLE}")
+        chromadb_available = is_chromadb_available()
+        logger.info(f"CHROMADB_AVAILABLE: {chromadb_available}")
         self.config = config
         
         # Initialize embeddings only if ChromaDB is available
-        if CHROMADB_AVAILABLE:
+        if chromadb_available:
             try:
                 from langchain_community.embeddings import HuggingFaceEmbeddings
                 logger.info(f"Creating embeddings with model: {config.EMBEDDING_MODEL}")
@@ -78,7 +83,7 @@ class VectorStore:
             logger.warning("No documents provided for vector store creation")
             return None
         
-        if not CHROMADB_AVAILABLE:
+        if not is_chromadb_available():
             logger.warning("ChromaDB not available, cannot create vector store")
             return None
         
@@ -106,7 +111,7 @@ class VectorStore:
     
     def load_vector_store(self):
         """Load existing vector store"""
-        if not CHROMADB_AVAILABLE:
+        if not is_chromadb_available():
             logger.warning("ChromaDB not available, cannot load vector store")
             return None
             
@@ -129,7 +134,7 @@ class VectorStore:
     
     def search_similar(self, query: str, k: int = 5) -> List[Any]:
         """Search for similar documents"""
-        if not CHROMADB_AVAILABLE:
+        if not is_chromadb_available():
             logger.warning("ChromaDB not available, using fallback search")
             return self._fallback_search(query, k)
             
@@ -153,7 +158,7 @@ class VectorStore:
     
     def search_with_score(self, query: str, k: int = 5) -> List[tuple]:
         """Search for similar documents with similarity scores"""
-        if not CHROMADB_AVAILABLE:
+        if not is_chromadb_available():
             logger.warning("ChromaDB not available, using fallback search")
             return []
             
@@ -171,7 +176,7 @@ class VectorStore:
     
     def get_collection_info(self) -> Dict[str, Any]:
         """Get information about the vector store collection"""
-        if not CHROMADB_AVAILABLE:
+        if not is_chromadb_available():
             return {
                 "collection_name": "fallback_documents",
                 "document_count": 0,
