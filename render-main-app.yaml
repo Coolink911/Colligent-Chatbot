@@ -3,8 +3,8 @@ services:
     name: colligent-main-app
     env: python
     plan: free
-    buildCommand: pip install -r requirements-render-flexible.txt
-    startCommand: streamlit run colligent_web_app.py --server.port=$PORT --server.address=0.0.0.0
+    buildCommand: pip install -r requirements-render-flexible.txt && chmod +x start_render.sh
+    startCommand: ./start_render.sh
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.7
@@ -14,3 +14,5 @@ services:
         sync: false
       - key: OPENAI_MODEL
         value: gpt-4o-mini
+    healthCheckPath: /
+    healthCheckTimeout: 300
