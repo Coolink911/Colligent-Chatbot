@@ -31,13 +31,10 @@ except (ImportError, RuntimeError, Exception) as e:
 # Try to import config, but don't fail if it doesn't work
 try:
     from colligent_config import Config
-    logger.info("Successfully imported colligent_config")
-except ImportError as e:
-    logger.warning(f"Failed to import colligent_config: {e}, using fallback")
+except ImportError:
     # Create a minimal config class if import fails
     class Config:
         def __init__(self):
-            logger.info("Creating fallback Config instance")
             self.EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
             self.VECTOR_DB_PATH = "vector_db"
             self.DATA_FOLDER = "data"
@@ -46,31 +43,25 @@ class VectorStore:
     """Manages vector database operations for document storage and retrieval"""
     
     def __init__(self, config: Config):
-        logger.info("Initializing VectorStore")
-        logger.info(f"CHROMADB_AVAILABLE: {CHROMADB_AVAILABLE}")
         self.config = config
         
         # Initialize embeddings only if ChromaDB is available
         if CHROMADB_AVAILABLE:
             try:
                 from langchain_community.embeddings import HuggingFaceEmbeddings
-                logger.info(f"Creating embeddings with model: {config.EMBEDDING_MODEL}")
                 self.embeddings = HuggingFaceEmbeddings(
                     model_name=config.EMBEDDING_MODEL,
                     model_kwargs={'device': 'cpu'}
                 )
-                logger.info("Embeddings created successfully")
             except Exception as e:
                 logging.error(f"Failed to initialize embeddings: {e}")
                 # Don't modify global variable, just set local embeddings to None
                 self.embeddings = None
         else:
-            logger.info("ChromaDB not available, setting embeddings to None")
             self.embeddings = None
             
         self.vector_db = None
         self.collection_name = "documents"
-        logger.info("VectorStore initialization complete")
     
     def create_vector_store(self, documents: List[Any]):
         """Create a new vector store from documents"""
