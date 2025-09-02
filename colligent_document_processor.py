@@ -1,14 +1,35 @@
 import os
-import PyPDF2
-from typing import List, Dict, Any
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_core.documents import Document
 import logging
+from typing import List, Dict, Any
+from pathlib import Path
 
-from colligent_config import Config
+# Add current directory to path for imports
+import sys
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
+
+try:
+    from colligent_config import Config
+    logger = logging.getLogger(__name__)
+except ImportError as e:
+    print(f"Warning: Could not import colligent_config: {e}")
+    logger = None
+
+try:
+    from langchain.text_splitter import RecursiveCharacterTextSplitter
+    from langchain.schema import Document
+except ImportError:
+    try:
+        from langchain_text_splitters import RecursiveCharacterTextSplitter
+        from langchain_core.documents import Document
+    except ImportError:
+        print("Warning: Could not import text splitters, using fallback")
+        RecursiveCharacterTextSplitter = None
+        Document = None
+
+import PyPDF2
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 class DocumentProcessor:
     """Handles document loading, text extraction, and chunking"""

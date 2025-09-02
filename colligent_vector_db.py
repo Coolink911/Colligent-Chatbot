@@ -1,41 +1,44 @@
 import os
 import logging
 import sys
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
+
+# Add current directory to path for imports
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
 
 # Set up logging at the very top
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize fallback variables at module level
+# Initialize at module level to prevent UnboundLocalError
 CHROMADB_AVAILABLE = False
 Chroma = Any
-
-# Always ensure Document class is available (needed for type hints)
 Document = None
-try:
-    from langchain_core.documents import Document
-    logger.info("Document class imported successfully")
-except ImportError as e:
-    logger.warning(f"Failed to import Document class: {e}")
-    # Create a fallback Document class
-    class Document:
-        def __init__(self, page_content: str, metadata: Dict[str, Any] = None):
-            self.page_content = page_content
-            self.metadata = metadata or {}
-    logger.info("Fallback Document class created")
 
-# More aggressive ChromaDB import handling
+# Try to import ChromaDB and related packages
 try:
     import chromadb
     from langchain_community.vectorstores import Chroma
     from langchain_community.embeddings import HuggingFaceEmbeddings
+    from langchain_core.documents import Document
     CHROMADB_AVAILABLE = True
-    logger.info("ChromaDB successfully imported")
-except (ImportError, AttributeError, RuntimeError) as e:
+    logger = logging.getLogger(__name__)
+    logger.info("Successfully imported ChromaDB and related packages")
+except ImportError as e:
+    logger = logging.getLogger(__name__)
     logger.warning(f"ChromaDB import failed: {e}")
     CHROMADB_AVAILABLE = False
     Chroma = Any
+    # Create fallback Document class if needed
+    if Document is None:
+        class Document:
+            def __init__(self, page_content: str, metadata: Dict[str, Any] = None):
+                self.page_content = page_content
+                self.metadata = metadata or {}
+            def __str__(self):
+                return f"Document(page_content='{self.page_content[:50]}...', metadata={self.metadata})"
+
 
 def is_chromadb_available():
     """Check if ChromaDB is available"""
