@@ -1,13 +1,37 @@
 import os
-from typing import List, Dict, Any, Optional
-from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
-from langchain_core.prompts import ChatPromptTemplate
 import logging
+import sys
+from typing import List, Dict, Any, Optional
 
-# Set up logging first
+# Add current directory to path for imports
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
+
+# Set up logging at the very top
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Try to import LangChain packages, but don't fail if they're missing
+try:
+    from langchain_openai import ChatOpenAI
+    from langchain.schema import HumanMessage, AIMessage
+    LANGCHAIN_AVAILABLE = True
+    logger.info("Successfully imported LangChain packages")
+except ImportError as e:
+    logger.warning(f"LangChain packages not available: {e}")
+    LANGCHAIN_AVAILABLE = False
+    # Create fallback classes
+    class HumanMessage:
+        def __init__(self, content):
+            self.content = content
+    class AIMessage:
+        def __init__(self, content):
+            self.content = content
+    class ChatOpenAI:
+        def __init__(self, *args, **kwargs):
+            pass
+        def __call__(self, messages):
+            return AIMessage(content="LangChain not available - using fallback responses")
 
 # Try to import config, but don't fail if it doesn't work
 try:
@@ -178,7 +202,6 @@ Answer:"""
         try:
             prompt = self.create_prompt(query, context)
             messages = [
-                SystemMessage(content=self.config.SYSTEM_PROMPT),
                 HumanMessage(content=f"Context:\n{context}\n\nQuestion: {query}")
             ]
             

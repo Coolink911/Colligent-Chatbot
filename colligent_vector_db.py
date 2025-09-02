@@ -23,10 +23,8 @@ try:
     from langchain_community.embeddings import HuggingFaceEmbeddings
     from langchain_core.documents import Document
     CHROMADB_AVAILABLE = True
-    logger = logging.getLogger(__name__)
     logger.info("Successfully imported ChromaDB and related packages")
 except ImportError as e:
-    logger = logging.getLogger(__name__)
     logger.warning(f"ChromaDB import failed: {e}")
     CHROMADB_AVAILABLE = False
     Chroma = Any
@@ -38,6 +36,14 @@ except ImportError as e:
                 self.metadata = metadata or {}
             def __str__(self):
                 return f"Document(page_content='{self.page_content[:50]}...', metadata={self.metadata})"
+
+# Create fallback embeddings if needed
+try:
+    from sentence_transformers import SentenceTransformer
+    SENTENCE_TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    SENTENCE_TRANSFORMERS_AVAILABLE = False
+    logger.warning("SentenceTransformers not available, using fallback")
 
 
 def is_chromadb_available():
