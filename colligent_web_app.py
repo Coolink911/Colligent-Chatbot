@@ -340,6 +340,32 @@ def main():
             - **Ask about my background**: "Tell me about your education and experience"
             - **Use different modes**: Try Code Style mode for technical details!
             """)
+            
+            # Debug section for deployment issues
+            if st.button("🐛 Debug Info", type="secondary", key="debug_btn"):
+                st.session_state.show_debug = not st.session_state.get('show_debug', False)
+                st.rerun()
+            
+            if st.session_state.get('show_debug', False):
+                st.markdown("### 🐛 Deployment Debug Information")
+                if 'chatbot' in st.session_state:
+                    debug_info = st.session_state.chatbot.get_deployment_debug_info()
+                    
+                    st.json(debug_info)
+                    
+                    # Provide helpful suggestions based on debug info
+                    if not debug_info.get('data_folder_exists', False):
+                        st.error("❌ Data folder not found! This is why the knowledge base failed.")
+                        st.info("💡 Solution: Make sure the data folder is included in your Git repository and deployed.")
+                    
+                    if debug_info.get('data_folder_file_count', 0) == 0:
+                        st.warning("⚠️ Data folder is empty or inaccessible.")
+                        st.info("💡 Solution: Check file permissions and ensure documents are properly committed to Git.")
+                    
+                    if not debug_info.get('vector_db_exists', False):
+                        st.info("ℹ️ Vector database will be created when documents are processed.")
+                else:
+                    st.warning("Chatbot not initialized yet.")
     
     # Main chat area
     with col2:

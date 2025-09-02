@@ -419,6 +419,43 @@ Answer:"""
         """Get information about the knowledge base"""
         return self.vector_store.get_collection_info()
     
+    def get_deployment_debug_info(self) -> Dict[str, Any]:
+        """Get debugging information for deployment issues"""
+        debug_info = {
+            "current_working_directory": os.getcwd(),
+            "data_folder_path": self.config.DATA_FOLDER,
+            "data_folder_exists": os.path.exists(self.config.DATA_FOLDER),
+            "vector_db_path": self.config.VECTOR_DB_PATH,
+            "vector_db_exists": os.path.exists(self.config.VECTOR_DB_PATH),
+            "python_version": os.sys.version,
+            "environment_variables": {
+                "OPENAI_API_KEY": "SET" if os.getenv("OPENAI_API_KEY") else "NOT_SET",
+                "OPENAI_MODEL": os.getenv("OPENAI_MODEL", "NOT_SET"),
+                "PORT": os.getenv("PORT", "NOT_SET"),
+                "PYTHON_VERSION": os.getenv("PYTHON_VERSION", "NOT_SET")
+            }
+        }
+        
+        # Check data folder contents if it exists
+        if os.path.exists(self.config.DATA_FOLDER):
+            try:
+                files = os.listdir(self.config.DATA_FOLDER)
+                debug_info["data_folder_contents"] = files
+                debug_info["data_folder_file_count"] = len(files)
+            except Exception as e:
+                debug_info["data_folder_listing_error"] = str(e)
+        
+        # Check vector db contents if it exists
+        if os.path.exists(self.config.VECTOR_DB_PATH):
+            try:
+                vector_files = os.listdir(self.config.VECTOR_DB_PATH)
+                debug_info["vector_db_contents"] = vector_files
+                debug_info["vector_db_file_count"] = len(vector_files)
+            except Exception as e:
+                debug_info["vector_db_listing_error"] = str(e)
+        
+        return debug_info
+    
     # Self-Reflective Agent Methods
     
     def _extract_energy_preferences(self, context: str) -> str:
