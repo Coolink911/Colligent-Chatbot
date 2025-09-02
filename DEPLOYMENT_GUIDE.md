@@ -29,21 +29,29 @@ Your Colligent AI chatbot can be deployed on multiple platforms. Choose the opti
 
 ---
 
-## 🚂 **Option 2: Railway**
+## 📱 **Option 2: Streamlit Cloud**
 
-**Why Railway?**
-- ✅ **$5 free credit** monthly
-- ✅ **Good performance**
+**Why Streamlit Cloud?**
+- ✅ **Native Streamlit support**
 - ✅ **Easy deployment**
+- ✅ **Free tier available**
+- ✅ **Direct GitHub integration**
 
 ### Deploy Steps:
-1. **Go to**: [railway.app](https://railway.app)
+1. **Go to**: [share.streamlit.io](https://share.streamlit.io)
 2. **Sign up** with GitHub
-3. **Click**: "New Project"
-4. **Select**: "Deploy from GitHub repo"
-5. **Choose**: `Coolink911/Colligent-Chatbot`
-6. **Add Environment Variables** (same as Render)
-7. **Wait** for deployment
+3. **Click**: "New app"
+4. **Connect**: Your GitHub repo
+5. **Configure**:
+   - **Repository**: `Coolink911/Colligent-Chatbot`
+   - **Branch**: `main`
+   - **Main file path**: `colligent_web_app.py`
+6. **Add Environment Variables**:
+   - `OPENAI_API_KEY`: Your OpenAI API key
+   - `OPENAI_MODEL`: `gpt-4o-mini`
+7. **Click**: "Deploy!"
+
+**Result**: `https://colligent-chatbot.streamlit.app`
 
 ---
 
@@ -70,40 +78,16 @@ git push heroku main
 
 ---
 
-## 🐳 **Option 4: Local Docker**
+## 🎯 **Recommended: Render or Streamlit Cloud**
 
-### Deploy Steps:
-```bash
-# Build image
-docker build -f Dockerfile.optimized -t colligent .
-
-# Run container
-docker run -p 8501:8501 \
-  -e OPENAI_API_KEY=your_key_here \
-  -e OPENAI_MODEL=gpt-4o-mini \
-  colligent
-```
-
----
-
-## 📱 **Option 5: Streamlit Cloud**
-
-1. **Go to**: [share.streamlit.io](https://share.streamlit.io)
-2. **Connect**: Your GitHub repo
-3. **Use**: `colligent_web_app.py` as main file
-4. **Add environment variables**
-
----
-
-## 🎯 **Recommended: Render**
-
-**Why Render is best:**
+**Why these are best:**
 - ✅ **No build timeout issues**
 - ✅ **Fast deployment**
 - ✅ **Reliable**
 - ✅ **Free tier is generous**
 
-**Deploy to Render now**: [render.com](https://render.com)
+**Deploy to Render**: [render.com](https://render.com)
+**Deploy to Streamlit Cloud**: [share.streamlit.io](https://share.streamlit.io)
 
 ---
 
@@ -127,9 +111,7 @@ collins_personal_agent/
 ├── colligent_document_processor.py # Document processing
 ├── colligent_vector_db.py        # Vector database
 ├── requirements-ultra-minimal.txt # Dependencies
-├── Dockerfile.optimized          # Docker configuration
 ├── render.yaml                   # Render configuration
-├── railway.json                  # Railway configuration
 ├── .streamlit/                   # Streamlit config
 ├── data/                         # Your documents
 └── README.md                     # Project documentation
@@ -139,7 +121,7 @@ collins_personal_agent/
 
 ## 🚀 **Quick Start**
 
-1. **Choose platform** (Render recommended)
+1. **Choose platform** (Render or Streamlit Cloud recommended)
 2. **Connect GitHub repo**
 3. **Set environment variables**
 4. **Deploy**
